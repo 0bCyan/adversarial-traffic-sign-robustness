@@ -219,6 +219,11 @@ def add_para(doc, text, after=6, before=0, bold=False, color=BLACK):
     return p
 
 
+def add_para_block(doc, paragraphs, after=6, before_first=0):
+    for idx, text in enumerate(paragraphs):
+        add_para(doc, text, after=after, before=before_first if idx == 0 else 0)
+
+
 def add_bullet(doc, text):
     p = doc.add_paragraph(style="List Bullet")
     p.paragraph_format.space_after = Pt(4)
@@ -478,8 +483,8 @@ def add_cover(doc):
         ("项目方向", "深度学习识别、对抗扰动攻击、模型鲁棒防御"),
         ("核心数据集", "GTSRB German Traffic Sign Recognition Benchmark，43 类交通标志"),
         ("模型主线", "ResNet18 小尺寸图像适配版，输出 43 类 logits"),
-        ("实验主线", "Clean recognition -> FGSM/PGD attack -> perturbation analysis -> input defense"),
-        ("完成状态", "基础识别、攻击、防御和扰动可感知性分析已完成；对抗训练为后续验证项"),
+        ("实验主线", "Clean recognition -> FGSM/PGD attack -> perturbation analysis -> input/input-model defense"),
+        ("完成状态", "基础识别、攻击、扰动可感知性、输入防御、BPDA 自适应攻击和 FGSM 对抗训练均已完成"),
         ("小组成员", "待填写"),
         ("提交日期", "2026 年 6 月"),
     ]
@@ -509,6 +514,10 @@ def add_abstract_and_summary(doc, data):
     add_para(
         doc,
         f"当前已完成结果显示：ResNet18 在正常测试集上的准确率为 {pct(baseline['accuracy'])}；在 PGD epsilon=0.03 攻击下，对抗样本准确率下降至 {pct(pgd003.adversarial_accuracy)}，攻击成功率为 {pct(pgd003.attack_success_rate)}。扰动并不是肉眼明显的大面积改图，epsilon=0.03 在反归一化像素空间的平均 Linf 约为 {num(pert_pgd003.mean_linf_pixel_space, 4)}，约等于 2/255，平均 PSNR 为 {num(pert_pgd003.mean_psnr_db, 2)} dB。输入防御中 JPEG Compression 表现最好，在 PGD epsilon=0.03 下将准确率恢复到 {pct(jpeg_pgd003.defended_accuracy)}。",
+    )
+    add_para(
+        doc,
+        "报告的写作重点是把实验串成一条可检验的证据链，而不是把图表并列堆放。每一组实验都对应一个问题：clean 识别证明模型具备正常能力；FGSM/PGD 证明小扰动能破坏模型；扰动可感知性证明攻击不是明显改图；随机噪声和 PGD 步数消融证明关键在梯度方向与优化过程；输入防御和参数扫描证明轻量预处理有恢复能力但存在 trade-off；失败案例、BPDA 和对抗训练则进一步讨论防御边界与模型级鲁棒性。",
     )
     p = doc.add_paragraph()
     r = p.add_run("关键词：")
@@ -562,9 +571,17 @@ def add_section_1(doc):
         ("E02", "扰动攻击", "FGSM/PGD + epsilon 扫描", "攻击曲线、对抗样例、攻击指标"),
         ("E02b", "可感知性分析", "像素空间 Linf、MSE、PSNR", "PSNR 柱状图、Delta x30 对比图"),
         ("E03", "输入防御", "Blur/Median/JPEG 防御消融", "防御曲线、恢复样例、防御指标"),
-        ("E04", "对抗训练", "代码已准备，未完成验证", "不纳入正式结论"),
+        ("E04", "严格防御验证", "类别鲁棒性、失败案例、BPDA 自适应攻击", "table_16-18、fig_42-46"),
+        ("E05", "模型级防御", "FGSM 对抗训练微调", "table_19-20、fig_47-51、对抗训练权重"),
     ]
     add_table(doc, ["编号", "实验环节", "实验目的", "保存产物"], rows, [1100, 1700, 3300, 3260], "表 2  实验链路与产物设计")
+    add_para_block(
+        doc,
+        [
+            "这条链路体现了本项目的实验设计逻辑。先做基础识别，是为了保证被攻击对象本身足够可靠；再做攻击，是为了暴露模型在局部输入邻域中的脆弱性；随后加入可感知性分析，是为了避免把对抗攻击误解成明显加噪声；接着加入输入防御、参数扫描和 JPEG 消融，是为了评价轻量方案是否可用；最后加入 BPDA 和对抗训练，是为了检验防御在更严格威胁模型下的边界，并比较输入级防御与模型级防御。",
+            "报告中所有关键表格和图片都保存到 reports/tables 与 reports/figures，实验结果不依赖口头描述。这样的产物设计有两个好处：一是答辩时可以按图表快速讲解；二是后续如果老师追问某个结论，可以回到 CSV、配置文件和生成脚本中复查数据来源。",
+        ],
+    )
 
 
 def add_section_2(doc, data):
@@ -626,10 +643,21 @@ def add_section_2(doc, data):
         ("Loss/Metric", "CrossEntropy、Accuracy、Macro F1", "训练与评估依据"),
     ]
     add_table(doc, ["链路阶段", "处理内容", "用途"], rows, [1900, 4200, 3260], "表 5  基础识别数据链路")
+    add_para_block(
+        doc,
+        [
+            "从模型结构上看，本项目的 ResNet18 不是直接照搬 ImageNet 版本。GTSRB 输入只有 64 x 64，如果仍使用 7x7 stride=2 卷积和 maxpool，早期空间分辨率会下降过快，数字、箭头和细边框等关键细节容易丢失。因此脚本中采用 3x3 stride=1 stem 并去掉初始 maxpool，使网络先保留更多局部结构，再通过后续残差层逐步扩大感受野。",
+            "从攻击角度看，理解 ResNet 的可微结构同样重要。交叉熵损失不仅能对参数求梯度，也能对输入张量求梯度。训练阶段使用参数梯度降低损失，攻击阶段则利用输入梯度增大损失；两者使用的是同一套反向传播机制，只是优化对象不同。这一点把深度学习识别原理和对抗扰动攻击原理自然连接起来。",
+        ],
+    )
 
 
 def add_section_3(doc, data):
     doc.add_heading("3. 数据集、基础识别实验与结果分析", level=1)
+    add_para(
+        doc,
+        "本章的目标是说明基础识别模型为什么可信。对抗鲁棒性实验必须建立在有效分类器之上：如果模型在正常样本上表现很差，那么攻击导致的错误并不能说明安全风险。因此本章先分析数据集、预处理、训练配置、训练曲线、混淆矩阵和类别级错误样例，为后续攻击实验提供干净基线。",
+    )
     overview = data["dataset"]
     baseline = data["baseline"]
     train_log = data["train_log"]
@@ -649,6 +677,10 @@ def add_section_3(doc, data):
     add_figure(doc, "fig_02_image_size_distribution.png", "图 4  GTSRB 图像尺寸分布统计", width=5.95)
     add_figure(doc, "fig_03_train_samples.png", "图 5  训练集交通标志样例", width=6.20)
     add_figure(doc, "fig_04_test_samples.png", "图 6  测试集交通标志样例", width=6.20)
+    add_para(
+        doc,
+        "从数据展示可以看到，GTSRB 并不是完全理想的标准图像：交通标志可能出现亮度不足、模糊、视角变化、背景干扰和尺寸差异。这些因素会影响正常识别，也会影响攻击和防御实验。正因为数据具有真实拍摄噪声，本项目的鲁棒性分析才比只在合成干净图上做攻击更有展示意义。",
+    )
 
     doc.add_heading("3.2 基础识别实验目的与配置", level=2)
     add_para(
@@ -691,6 +723,10 @@ def add_section_3(doc, data):
     add_figure(doc, "fig_06_baseline_accuracy_curve.png", "图 8  ResNet18 训练/验证准确率曲线", width=5.70)
     add_figure(doc, "fig_07_baseline_confusion_matrix.png", "图 9  ResNet18 测试集混淆矩阵", width=5.90)
     add_figure(doc, "fig_08_baseline_per_class_accuracy.png", "图 10  ResNet18 各类别测试准确率", width=6.05)
+    add_para(
+        doc,
+        "训练曲线和测试指标共同说明模型已经收敛且具备较强泛化能力。高 clean accuracy 不是报告终点，而是后续攻击实验的前提：只有当模型正常识别能力可靠时，对抗样本造成的准确率下降才可以解释为鲁棒性问题，而不是基础模型欠拟合或训练失败。",
+    )
 
     doc.add_heading("3.4 类别级结果与错误样例分析", level=2)
     low = per_class.sort_values("accuracy", ascending=True).head(6)
@@ -708,6 +744,10 @@ def add_section_3(doc, data):
     add_para(
         doc,
         "从类别级指标和错误样例可以看出，clean 准确率很高，但模型仍会在低光照、模糊、遮挡、类别形状相近或图像质量较差时出错。这为后续攻击实验提供了直观背景：对抗扰动并不是凭空制造脆弱性，而是利用模型决策边界附近的敏感方向放大错误风险。",
+    )
+    add_para(
+        doc,
+        "这里的失败案例不应被视为报告缺陷，而是后续分析的入口。真实模型一定存在难例，鲁棒性研究关心的是：在这些边界附近，是否存在人眼难以察觉但能稳定改变预测的方向；如果存在，能否用防御方法把样本重新拉回正确区域。后文的 FGSM/PGD、margin 分析和 Grad-CAM 都是在回答这个问题。",
     )
 
     doc.add_heading("3.5 基础识别部分的对比与消融说明", level=2)
@@ -738,6 +778,10 @@ def attack_rows(df):
 
 def add_section_4(doc, data):
     doc.add_heading("4. 对抗扰动攻击原理、实验与可感知性分析", level=1)
+    add_para(
+        doc,
+        "本章从基础识别过渡到安全性评估。攻击实验不是为了制造视觉上夸张的坏图，而是在明确威胁模型下寻找最小但有效的输入改变。报告同时使用 FGSM 和 PGD，是为了从快速单步攻击和更强多步攻击两个角度验证模型脆弱性；同时加入扰动可感知性指标，是为了证明攻击属于真正的小幅扰动。",
+    )
     attack_df = data["attack"]
     pert_df = data["perturbation"]
 
@@ -813,6 +857,10 @@ def add_section_4(doc, data):
         doc,
         "结果显示，epsilon 增大时对抗准确率持续下降，攻击成功率明显上升。在 epsilon=0.03 下，FGSM 将准确率降至 67.10%，PGD 将准确率降至 60.00%。PGD 通过迭代更新和投影搜索，通常比 FGSM 更强；但在 epsilon=0.05 处二者差距缩小，说明大扰动下单步攻击也能产生较强破坏。",
     )
+    add_para(
+        doc,
+        "这组结果说明，模型的 clean 决策边界在部分样本附近距离并不远。FGSM 只使用一次梯度就能造成明显下降，说明局部线性近似已经能找到有效方向；PGD 进一步下降，说明在同一 epsilon 邻域内反复搜索可以找到更坏的点。两者的差异构成后续 PGD 步数消融的动机。",
+    )
 
     doc.add_heading("4.5 扰动可感知性：证明这是真正的小扰动攻击", level=2)
     add_para(
@@ -866,6 +914,10 @@ def add_section_4(doc, data):
         "fig_15_pgd_eps003_triplets.png",
         "图 21  PGD epsilon=0.03 攻击样例，Noise 列为放大热力图",
         width=6.20,
+    )
+    add_para(
+        doc,
+        "可感知性分析解决的是展示中的核心误解：热力图很明显，不代表攻击图很明显。真实送入模型的是 Adversarial 图像；Noise、Delta x30 和 Delta heat 都是人为放大后的解释图。数值指标进一步支撑这一点：像素空间 Linf 约 0.008，意味着单个通道最大变化约为 2/255 量级；PSNR 处于较高区间，说明扰动主要是微小像素变化。",
     )
 
     doc.add_heading("4.6 攻击部分对比与消融", level=2)
@@ -1069,7 +1121,7 @@ def add_section_5(doc, data):
     add_callout(
         doc,
         "防御边界",
-        "输入预处理防御是轻量基线，不是完备安全方案。真正强防御应继续验证对抗训练、随机化防御、自适应攻击和更严格的鲁棒评估。本报告只把已完成且有数据支撑的 JPEG/Blur/Median 结果作为正式结论。",
+        "输入预处理防御是轻量基线，不是完备安全方案。本项目已经补充 BPDA 自适应攻击和 FGSM 对抗训练，用来检验输入防御的威胁模型边界，并比较模型级防御的效果。后续仍可继续扩展 PGD/TRADES 训练、EOT 自适应攻击和跨模型复验。",
     )
 
 
@@ -1202,6 +1254,10 @@ def add_section_5_extended(doc, data):
         doc,
         "完整测试集验证说明 3000 张抽样实验趋势不是偶然；运行效率统计则说明 PGD 由于多步反向传播最慢，FGSM 次之，JPEG 防御和普通推理开销较低。该结果可直接支撑答辩 Demo 的流程设计。",
     )
+    add_para(
+        doc,
+        "这些补充实验的共同作用是把防御章节从“平均准确率提升”推进到“证据更完整的鲁棒性评估”。JPEG quality 消融解释参数选择，Grad-CAM 提供内部关注区域证据，完整测试集验证排除抽样偶然，运行效率说明工程可展示性。这样防御结果既有指标，也有可视化和工程成本分析。",
+    )
 
     doc.add_heading("5.7 更严格防御验证：类别鲁棒性、失败案例、自适应攻击与对抗训练", level=2)
     add_para(
@@ -1321,6 +1377,10 @@ def add_section_5_extended(doc, data):
         "对抗训练属于模型级防御：训练时混入 FGSM 对抗样本，使模型在更新参数时直接学习更平滑、更稳定的局部决策边界。本实验从 baseline ResNet18 继续微调 4 个 epoch。结果显示 clean accuracy 从 "
         f"{pct(base_clean)} 到 {pct(clean_row.accuracy)}，没有明显牺牲正常识别；PGD epsilon=0.03 鲁棒准确率从 {pct(attack_df[(attack_df.attack == 'pgd') & (np.isclose(attack_df.epsilon, 0.03))].iloc[0].adversarial_accuracy)} 提升到 {pct(adv_train_df[(adv_train_df.attack == 'pgd') & (np.isclose(adv_train_df.epsilon, 0.03))].iloc[0].accuracy)}。这说明模型级防御比单纯输入预处理更能提升鲁棒性，但训练成本更高，且仍需更强 PGD/TRADES 等训练策略进一步验证。",
     )
+    add_para(
+        doc,
+        "因此，防御部分最终形成两个层次的结论。输入预处理适合快速部署和演示，能够在非自适应攻击下恢复一部分样本，但存在失败案例和威胁模型边界；对抗训练需要额外训练成本，却能直接改变局部决策边界，使 FGSM 和 PGD 鲁棒准确率整体提升。两类方法并不是互斥关系，实际系统中可以把输入清洗作为前端缓解措施，把鲁棒训练作为模型本身的安全增强。",
+    )
 
 
 def add_section_6(doc):
@@ -1390,6 +1450,10 @@ def add_section_7(doc):
         doc,
         "在新增 per-class 鲁棒性、失败案例、自适应 BPDA 攻击和 FGSM 对抗训练后，项目已经从“完整课程实验”进一步接近鲁棒性研究。但仍有一些更高阶内容没有展开，报告中不虚构未完成指标，而把它们作为后续计划。",
     )
+    add_para(
+        doc,
+        "这些不足并不影响当前结论成立，但会影响结论外推范围。例如，当前最完整的结果围绕 ResNet18 展开，因此可以说明该模型在 GTSRB 上的鲁棒性表现，却不能直接代表所有交通标志模型；当前 BPDA 验证了 JPEG Q75 的自适应攻击边界，但还没有覆盖所有可能的自适应攻击策略。因此本章把后续计划明确列出，体现报告对实验边界的诚实说明。",
+    )
     rows = [
         ("模型结构消融", "SimpleCNN、原始 ResNet18 stem、当前适配 ResNet18", "未完成训练", "证明结构选择不是拍脑袋"),
         ("数据增强消融", "无增强 vs 当前增强", "未完成训练", "分析 clean 泛化与鲁棒性的关系"),
@@ -1429,6 +1493,18 @@ def add_conclusion_roles_refs(doc):
     add_para(
         doc,
         "防御实验表明，输入预处理方法能够部分恢复模型性能，其中 JPEG Compression 在当前设置下最有效。进一步参数扫描和 JPEG quality 消融显示，更强压缩通常带来更高鲁棒恢复，但也会损失 clean accuracy，因此防御配置需要在正常识别与鲁棒性之间折中。新增类别级分析和失败案例说明，防御收益并不均匀；BPDA 自适应攻击进一步提醒输入预处理不能被当成严格安全证明。FGSM 对抗训练则提供了模型级防御证据，使 PGD epsilon=0.03 鲁棒准确率提升到 88.63%。整体来看，本项目已经形成较完整的深度学习识别到对抗鲁棒性的实验链路，技术性和展示性均强于单纯复刻分类模型。",
+    )
+    add_para(
+        doc,
+        "从实验方法角度看，本项目最大的提升是把每个结论都放在对照实验中验证。攻击结果不仅有 FGSM/PGD 指标，还有随机噪声对照和 PGD 步数消融；扰动是否真实微小不仅靠肉眼观察，还使用像素空间 Linf、平均绝对扰动和 PSNR；防御是否有效不仅看一个 JPEG 指标，还补充参数扫描、JPEG quality 消融、完整测试集验证和失败案例。这样的组织方式让报告从“展示结果”提升为“解释结果”。",
+    )
+    add_para(
+        doc,
+        "从项目心得角度看，深度学习模型的脆弱性并不是模型完全没有学会任务，而是它在高维输入空间中的决策边界可能与人类视觉感知不一致。人眼看来几乎一样的两张交通标志图，在模型特征空间中可能已经位于不同类别区域。理解这一点后，ResNet、FGSM、PGD、JPEG 和对抗训练就不再是孤立名词，而是围绕“如何学习稳定决策边界”展开的一组方法。",
+    )
+    add_para(
+        doc,
+        "从答辩展示角度看，建议按一张样例图讲完整故事：先展示 clean 正确识别，再展示 PGD 后预测错误，再说明 Delta heat 是放大视图、真实扰动约 2/255，然后用随机噪声对照证明不是普通噪声，接着展示 JPEG 恢复和失败案例，最后用对抗训练结果说明模型级防御更强。这样可以把复杂实验变成清晰叙事，也能回应老师“做了什么、为什么这样做、算法理解是否深入”的要求。",
     )
 
     doc.add_heading("8.3 小组分工模板", level=2)

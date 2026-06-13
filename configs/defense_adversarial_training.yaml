@@ -37,6 +37,8 @@ evaluation:
   pgd_alpha: 0.005
   pgd_steps: 7
   baseline_attack_metrics: results/02_attack/fgsm_pgd/metrics/attack_metrics.csv
+  input_defense_metrics: results/03_defense/input_preprocessing/metrics/input_defense_metrics.csv
+  jpeg_quality: 75
 
 outputs:
   result_dir: results/03_defense/adversarial_training

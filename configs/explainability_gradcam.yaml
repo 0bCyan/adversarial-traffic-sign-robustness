@@ -1,0 +1,35 @@
+experiment_name: 04_explainability_gradcam
+seed: 42
+
+data:
+  dataset: GTSRB
+  root: data/raw
+  image_size: 64
+  batch_size: 64
+  num_workers: 4
+  selected_indices: results/02_attack/fgsm_pgd/metrics/selected_eval_indices.csv
+  max_eval_samples: 3000
+  download: false
+
+model:
+  checkpoint: results/01_baseline/resnet18/checkpoints/best_model.pth
+
+attack:
+  method: pgd
+  epsilon: 0.03
+  alpha: 0.005
+  steps: 7
+
+defense:
+  method: jpeg_compression
+  quality: 75
+
+gradcam:
+  target_layer: layer4
+  max_cases: 6
+  prefer_recovered_cases: true
+
+outputs:
+  result_dir: results/04_explainability/gradcam
+  report_figure_dir: reports/figures
+  report_table_dir: reports/tables

@@ -1,0 +1,34 @@
+experiment_name: 01_baseline_resnet18
+seed: 42
+
+data:
+  dataset: GTSRB
+  raw_dir: data/raw/gtsrb
+  processed_dir: data/processed/gtsrb
+  image_size: 64
+  num_classes: 43
+  batch_size: 64
+  num_workers: 4
+
+model:
+  name: resnet18
+  pretrained: false
+
+training:
+  epochs: 30
+  optimizer: adamw
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  scheduler: cosine
+
+augmentation:
+  random_rotation: 10
+  color_jitter: true
+  random_affine: true
+
+outputs:
+  result_dir: results/01_baseline/resnet18
+  save_confusion_matrix: true
+  save_misclassified_examples: true
+  save_prediction_samples: true
+

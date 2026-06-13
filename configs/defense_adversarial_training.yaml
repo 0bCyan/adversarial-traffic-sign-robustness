@@ -1,0 +1,34 @@
+experiment_name: 03_defense_adversarial_training
+seed: 42
+
+data:
+  dataset: GTSRB
+  image_size: 64
+  batch_size: 64
+
+model:
+  name: resnet18
+  pretrained: false
+
+training:
+  epochs: 30
+  optimizer: adamw
+  learning_rate: 0.001
+  weight_decay: 0.0001
+
+defense:
+  method: adversarial_training
+  attack: fgsm
+  epsilon: 0.02
+  clean_ratio: 0.5
+  adversarial_ratio: 0.5
+
+evaluation:
+  attacks: [clean, fgsm, pgd]
+  epsilons: [0.01, 0.02, 0.03, 0.05]
+
+outputs:
+  result_dir: results/03_defense/adversarial_training
+  save_robustness_table: true
+  save_before_after_comparison: true
+

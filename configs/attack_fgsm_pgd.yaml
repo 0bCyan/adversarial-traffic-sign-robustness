@@ -1,0 +1,26 @@
+experiment_name: 02_attack_fgsm_pgd
+seed: 42
+
+data:
+  dataset: GTSRB
+  image_size: 64
+  batch_size: 64
+
+model:
+  checkpoint: results/01_baseline/resnet18/checkpoints/best_model.pth
+
+attacks:
+  fgsm:
+    epsilons: [0.005, 0.01, 0.02, 0.03, 0.05]
+  pgd:
+    epsilons: [0.005, 0.01, 0.02, 0.03, 0.05]
+    alpha: 0.005
+    steps: 10
+
+outputs:
+  result_dir: results/02_attack/fgsm_pgd
+  save_adversarial_grid: true
+  save_noise_map: true
+  save_confidence_bar: true
+  save_attack_curve: true
+

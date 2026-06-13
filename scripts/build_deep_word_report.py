@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from docx import Document
 from docx.enum.section import WD_SECTION
@@ -879,6 +880,108 @@ def add_section_4(doc, data):
     add_table(doc, ["消融类型", "比较项", "现象", "结论"], rows, [1700, 2500, 2500, 2660], "表 18  攻击实验对比与消融结论")
 
 
+def add_section_4_extended(doc, data):
+    doc.add_heading("4.7 补充验证实验：随机噪声对照、PGD 步数消融与置信边界变化", level=2)
+    random_df = data["random_noise"]
+    step_df = data["pgd_steps"]
+    margin_df = data["margin_shift"]
+    attack_df = data["attack"]
+
+    add_para(
+        doc,
+        "为了进一步证明本项目中的攻击是真正意义上的对抗扰动，而不是普通随机噪声造成的图像损坏，本项目增加了随机 Linf 噪声对照实验。对照实验在相同 epsilon 预算内从 [-epsilon, epsilon] 均匀采样随机扰动，并与 FGSM/PGD 的梯度定向扰动比较。若随机噪声几乎不影响模型，而梯度扰动显著降低准确率，则说明攻击利用了模型损失曲面的敏感方向，而不是简单把图片弄脏。",
+    )
+    rows = []
+    fgsm = attack_df[attack_df.attack == "fgsm"].set_index("epsilon")
+    pgd = attack_df[attack_df.attack == "pgd"].set_index("epsilon")
+    for _, row in random_df.sort_values("epsilon").iterrows():
+        eps = float(row.epsilon)
+        rows.append(
+            [
+                num(eps, 3),
+                pct(row.perturbed_accuracy),
+                pct(fgsm.loc[eps].adversarial_accuracy),
+                pct(pgd.loc[eps].adversarial_accuracy),
+                pct(row.success_rate_on_clean_correct),
+            ]
+        )
+    add_table(
+        doc,
+        ["Epsilon", "Random Acc.", "FGSM Acc.", "PGD Acc.", "Random Success"],
+        rows,
+        [1400, 1900, 1900, 1900, 2260],
+        "表 19  随机 Linf 噪声与梯度对抗攻击对照",
+        font_size=8.8,
+    )
+    add_figure(doc, "fig_27_random_vs_adversarial_accuracy.png", "图 22  随机噪声对照与梯度攻击准确率对比", width=6.05)
+    add_figure(
+        doc,
+        "fig_32_random_vs_pgd_visual_grid.png",
+        "图 23  随机噪声与 PGD 对抗样本视觉对照",
+        width=6.25,
+        note="说明：Random 与 PGD 使用相同 epsilon=0.03 扰动预算，但只有 PGD 通过梯度方向显著改变模型预测。",
+    )
+    rand003 = random_df[np.isclose(random_df.epsilon, 0.03)].iloc[0]
+    pgd003 = attack_df[(attack_df.attack == "pgd") & (np.isclose(attack_df.epsilon, 0.03))].iloc[0]
+    add_para(
+        doc,
+        f"结果非常直接：epsilon=0.03 时，随机扰动准确率为 {pct(rand003.perturbed_accuracy)}，几乎不破坏模型；同样预算下 PGD 准确率为 {pct(pgd003.adversarial_accuracy)}。这说明对抗样本不是依靠“明显噪声”取胜，而是沿损失函数梯度方向寻找更靠近错误决策区域的输入。",
+    )
+
+    add_para(
+        doc,
+        "PGD 步数消融用于解释多步攻击为什么比单步攻击强。固定 epsilon=0.03、alpha=0.005，只改变迭代步数。随着步数增加，PGD 在同一扰动球内进行更多次局部搜索，通常能够找到更高损失、更容易误分类的点。",
+    )
+    rows = []
+    for _, row in step_df.sort_values("pgd_steps").iterrows():
+        rows.append(
+            [
+                int(row.pgd_steps),
+                pct(row.adversarial_accuracy),
+                pct(row.attack_success_rate),
+                num(row.mean_confidence_drop, 4),
+            ]
+        )
+    add_table(
+        doc,
+        ["PGD Steps", "Adv. Acc.", "Attack Success", "Mean Conf. Drop"],
+        rows,
+        [1800, 2200, 2500, 2860],
+        "表 20  PGD 迭代步数消融结果，epsilon=0.03",
+        font_size=8.8,
+    )
+    add_figure(doc, "fig_28_pgd_step_ablation.png", "图 24  PGD 迭代步数对攻击强度的影响", width=5.90)
+    last = step_df.sort_values("pgd_steps").iloc[-1]
+    add_para(
+        doc,
+        f"PGD 从 1 步增加到 20 步时，对抗准确率从 {pct(step_df.sort_values('pgd_steps').iloc[0].adversarial_accuracy)} 下降到 {pct(last.adversarial_accuracy)}，攻击成功率升至 {pct(last.attack_success_rate)}。这验证了 PGD 的技术核心并非更大的扰动预算，而是在相同 epsilon 约束内进行更充分的优化。",
+    )
+
+    rows = []
+    for _, row in margin_df.iterrows():
+        rows.append(
+            [
+                row.condition,
+                num(row.mean_top1_top2_margin, 4),
+                num(row.median_top1_top2_margin, 4),
+                pct(row["low_margin_rate_lt_0.20"]),
+            ]
+        )
+    add_table(
+        doc,
+        ["Condition", "Mean Margin", "Median Margin", "Low-margin Rate"],
+        rows,
+        [2600, 2200, 2200, 2360],
+        "表 21  Top-1 与 Top-2 概率间隔变化",
+        font_size=8.8,
+    )
+    add_figure(doc, "fig_31_margin_shift_histogram.png", "图 25  Clean、随机扰动和对抗扰动下的概率间隔分布", width=5.95)
+    add_para(
+        doc,
+        "概率间隔用于衡量模型分类决策的稳定性。Clean 与随机扰动的 top-1/top-2 间隔几乎重合，而 FGSM/PGD 会显著压缩间隔，说明对抗扰动不仅改变最终标签，还会把样本推向更不稳定的决策区域。",
+    )
+
+
 def defense_rows(df, eps):
     rows = []
     for attack in ["fgsm", "pgd"]:
@@ -970,6 +1073,47 @@ def add_section_5(doc, data):
     )
 
 
+def add_section_5_extended(doc, data):
+    doc.add_heading("5.5 防御参数扫描：鲁棒性与干净准确率的权衡", level=2)
+    sweep_df = data["defense_sweep"]
+    add_para(
+        doc,
+        "基础防御实验只比较了固定参数的 Gaussian Blur、Median Filter 和 JPEG Compression。为了进一步分析防御强度，本项目增加参数扫描：Gaussian sigma 取 0.3、0.6、1.0；Median kernel 取 3、5；JPEG quality 取 95、75、50。该实验同时评估 clean transformed accuracy 与 PGD epsilon=0.03 defended accuracy，从而观察防御是否以牺牲正常样本识别为代价。",
+    )
+    rows = []
+    selected = sweep_df.sort_values("pgd_defended_accuracy", ascending=False)
+    for _, row in selected.iterrows():
+        rows.append(
+            [
+                row.variant,
+                pct(row.clean_transformed_accuracy),
+                pct(row.pgd_defended_accuracy),
+                pct(row.clean_accuracy_drop),
+                pct(row.pgd_accuracy_gain),
+            ]
+        )
+    add_table(
+        doc,
+        ["Variant", "Clean Acc.", "PGD Def. Acc.", "Clean Drop", "PGD Gain"],
+        rows,
+        [2600, 1700, 1900, 1500, 1660],
+        "表 24  输入防御参数扫描结果，按 PGD 防御准确率排序",
+        font_size=8.5,
+    )
+    add_figure(doc, "fig_29_defense_parameter_tradeoff.png", "图 29  输入防御参数扫描：clean accuracy 与 robust accuracy 权衡", width=6.05)
+    add_figure(doc, "fig_30_defense_parameter_bar.png", "图 30  PGD epsilon=0.03 下不同防御参数的准确率对比", width=6.05)
+    best = selected.iloc[0]
+    jpeg75 = sweep_df[sweep_df.variant == "jpeg_q75"].iloc[0]
+    add_para(
+        doc,
+        f"扫描结果显示，JPEG Compression 的防御强度随压缩增强而提高：jpeg_q95、jpeg_q75、jpeg_q50 分别取得不同程度恢复，其中 jpeg_q50 的 PGD 防御准确率最高，为 {pct(best.pgd_defended_accuracy)}，但 clean accuracy 下降到 {pct(best.clean_transformed_accuracy)}。相比之下，jpeg_q75 的鲁棒准确率为 {pct(jpeg75.pgd_defended_accuracy)}，clean accuracy 为 {pct(jpeg75.clean_transformed_accuracy)}，是更均衡的设置。",
+    )
+    add_para(
+        doc,
+        "这个结果说明输入防御不是简单地“越强越好”。较强压缩、较大滤波窗口会更有效地削弱对抗扰动，但也会损失交通标志边缘、数字和颜色细节，导致正常样本准确率下降。报告中保留 JPEG quality=75 作为主防御配置，是因为它兼顾 clean 性能和鲁棒恢复；参数扫描则作为更深入的消融证据。",
+    )
+
+
 def add_section_6(doc):
     doc.add_heading("6. 实现、复现与结果保存", level=1)
     doc.add_heading("6.1 代码结构", level=2)
@@ -982,6 +1126,7 @@ def add_section_6(doc):
         ("src/evaluate_attacks.py", "攻击评估、攻击曲线和对抗样例图生成"),
         ("src/evaluate_input_defense.py", "输入预处理防御评估与恢复样例图生成"),
         ("src/analyze_perturbations.py", "像素空间 Linf、MSE、PSNR 与 Delta x30 图生成"),
+        ("src/extended_experiments.py", "随机噪声对照、PGD 步数消融、防御参数扫描与概率间隔分析"),
         ("scripts/build_deep_word_report.py", "本深度实验报告生成脚本"),
     ]
     add_table(doc, ["文件", "功能"], rows, [3400, 5960], "表 24  核心实现文件")
@@ -993,6 +1138,7 @@ def add_section_6(doc):
         "python -m src.evaluate_attacks --config configs/attack_fgsm_pgd.yaml",
         "python -m src.analyze_perturbations",
         "python -m src.evaluate_input_defense --config configs/defense_input_preprocessing.yaml",
+        "python -m src.extended_experiments",
         "python scripts/build_deep_word_report.py",
     ]
     for cmd in commands:
@@ -1005,6 +1151,7 @@ def add_section_6(doc):
         ("攻击实验", "table_06_attack_metrics.csv", "fig_11-15"),
         ("扰动分析", "table_08_perturbation_perceptibility_metrics.csv", "fig_20-22"),
         ("防御实验", "table_07_input_defense_metrics.csv", "fig_16-19"),
+        ("补充验证", "table_09-12 随机噪声、PGD 步数、防御扫描、margin 指标", "fig_27-32"),
         ("模型权重", "results/01_baseline/resnet18/checkpoints/best_model.pth", "用于攻击与防御评估"),
     ]
     add_table(doc, ["实验模块", "表格/指标产物", "图片/模型产物"], rows, [1800, 4200, 3360], "表 25  结果保存与报告素材索引")
@@ -1023,6 +1170,7 @@ def add_section_7(doc):
         ("自适应攻击", "攻击者知道 JPEG/Blur 防御并穿过防御求梯度", "未完成", "检验输入预处理是否被绕过"),
         ("可解释性", "Grad-CAM 对比 clean/adv/defense 注意区域", "未完成", "增强答辩展示性和原理解释"),
         ("交互 Demo", "上传图片 -> 识别 -> 攻击 -> 防御恢复", "未完成", "提高课程展示效果"),
+        ("更大规模防御验证", "在全测试集和更多模型上重复参数扫描", "未完成", "验证结论是否跨模型稳定"),
     ]
     add_table(doc, ["待补实验", "目的", "当前状态", "补强价值"], rows, [1800, 3100, 1700, 2760], "表 26  当前仍缺实验与验证计划")
 
@@ -1034,7 +1182,10 @@ def add_conclusion_roles_refs(doc):
         "从普通交通标志分类扩展到安全性评估，形成识别、攻击、防御闭环。",
         "将 epsilon 从归一化空间解释到像素空间，并用 PSNR、Linf 证明扰动确实较小。",
         "同时比较 FGSM 与 PGD，进行攻击方法与扰动预算双重消融。",
+        "加入随机 Linf 噪声对照，证明对抗攻击的有效性来自梯度定向而不是普通噪声。",
+        "加入 PGD 步数消融和概率间隔分析，解释迭代优化如何压缩模型决策边界。",
         "进行输入预处理防御消融，比较无防御、Gaussian Blur、Median Filter、JPEG Compression。",
+        "进一步扫描防御参数，分析 robust accuracy 与 clean accuracy 的实际权衡。",
         "保存训练曲线、混淆矩阵、对抗样本、放大扰动图、防御恢复案例等中间产物，便于报告和答辩展示。",
     ]:
         add_bullet(doc, item)
@@ -1046,7 +1197,7 @@ def add_conclusion_roles_refs(doc):
     )
     add_para(
         doc,
-        "防御实验表明，输入预处理方法能够部分恢复模型性能，其中 JPEG Compression 在当前设置下最有效。但输入预处理不是完整鲁棒性方案，后续应继续补充对抗训练、自适应攻击、结构消融和可解释性分析。整体来看，本项目已经形成较完整的深度学习识别到对抗鲁棒性的实验链路，技术性和展示性均强于单纯复刻分类模型。",
+        "防御实验表明，输入预处理方法能够部分恢复模型性能，其中 JPEG Compression 在当前设置下最有效。进一步参数扫描显示，更强压缩通常带来更高鲁棒恢复，但也会损失 clean accuracy，因此防御配置需要在正常识别与鲁棒性之间折中。输入预处理不是完整鲁棒性方案，后续应继续补充对抗训练、自适应攻击、结构消融和可解释性分析。整体来看，本项目已经形成较完整的深度学习识别到对抗鲁棒性的实验链路，技术性和展示性均强于单纯复刻分类模型。",
     )
 
     doc.add_heading("8.3 小组分工模板", level=2)
@@ -1080,6 +1231,10 @@ def load_data():
         "attack": pd.read_csv(TABLE_DIR / "table_06_attack_metrics.csv"),
         "defense": pd.read_csv(TABLE_DIR / "table_07_input_defense_metrics.csv"),
         "perturbation": pd.read_csv(TABLE_DIR / "table_08_perturbation_perceptibility_metrics.csv"),
+        "random_noise": pd.read_csv(TABLE_DIR / "table_09_random_noise_control.csv"),
+        "pgd_steps": pd.read_csv(TABLE_DIR / "table_10_pgd_step_ablation.csv"),
+        "defense_sweep": pd.read_csv(TABLE_DIR / "table_11_defense_parameter_sweep.csv"),
+        "margin_shift": pd.read_csv(TABLE_DIR / "table_12_margin_shift_metrics.csv"),
     }
 
 
@@ -1095,7 +1250,9 @@ def build_docx():
     add_section_2(doc, data)
     add_section_3(doc, data)
     add_section_4(doc, data)
+    add_section_4_extended(doc, data)
     add_section_5(doc, data)
+    add_section_5_extended(doc, data)
     add_section_6(doc)
     add_section_7(doc)
     add_conclusion_roles_refs(doc)

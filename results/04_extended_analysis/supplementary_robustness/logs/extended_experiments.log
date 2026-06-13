@@ -1,0 +1,36 @@
+Random noise control
+             attack  epsilon  clean_accuracy  perturbed_accuracy  success_rate_on_clean_correct  mean_confidence_drop  total_images
+random_uniform_linf    0.005        0.979333            0.979333                       0.000000             -0.000010          3000
+random_uniform_linf    0.010        0.979333            0.979333                       0.000000             -0.000008          3000
+random_uniform_linf    0.020        0.979333            0.979000                       0.000340              0.000062          3000
+random_uniform_linf    0.030        0.979333            0.979667                       0.000000              0.000063          3000
+random_uniform_linf    0.050        0.979333            0.978667                       0.001021              0.000832          3000
+
+PGD step ablation
+ epsilon  alpha  pgd_steps  clean_accuracy  adversarial_accuracy  attack_success_rate  mean_confidence_drop  total_images
+    0.03  0.005          1        0.979333              0.953333             0.026549              0.013614          3000
+    0.03  0.005          2        0.979333              0.903000             0.077944              0.029238          3000
+    0.03  0.005          3        0.979333              0.832000             0.150442              0.044659          3000
+    0.03  0.005          5        0.979333              0.707333             0.277740              0.059923          3000
+    0.03  0.005          7        0.979333              0.603000             0.384275              0.066573          3000
+    0.03  0.005         10        0.979333              0.510333             0.478897              0.063049          3000
+    0.03  0.005         20        0.979333              0.446333             0.544248              0.051363          3000
+
+Defense parameter sweep
+           variant           method                           params  clean_base_accuracy  pgd_base_accuracy  clean_transformed_accuracy  pgd_defended_accuracy  clean_accuracy_drop  pgd_accuracy_gain  mean_defended_confidence  total_images
+              none             none                               {}             0.979333           0.603333                    0.979333               0.603333             0.000000           0.000000                  0.918402          3000
+gaussian_sigma_0.3    gaussian_blur {"kernel_size": 3, "sigma": 0.3}             0.979333           0.603333                    0.979333               0.605000             0.000000           0.001667                  0.918612          3000
+gaussian_sigma_0.6    gaussian_blur {"kernel_size": 3, "sigma": 0.6}             0.979333           0.603333                    0.977000               0.674333             0.002333           0.071000                  0.928505          3000
+gaussian_sigma_1.0    gaussian_blur {"kernel_size": 3, "sigma": 1.0}             0.979333           0.603333                    0.975667               0.712333             0.003667           0.109000                  0.934970          3000
+         median_k3    median_filter               {"kernel_size": 3}             0.979333           0.603333                    0.976000               0.678667             0.003333           0.075333                  0.928134          3000
+         median_k5    median_filter               {"kernel_size": 5}             0.979333           0.603333                    0.963000               0.773333             0.016333           0.170000                  0.932551          3000
+          jpeg_q95 jpeg_compression                  {"quality": 95}             0.979333           0.603333                    0.978333               0.722333             0.001000           0.119000                  0.933267          3000
+          jpeg_q75 jpeg_compression                  {"quality": 75}             0.979333           0.603333                    0.972333               0.787333             0.007000           0.184000                  0.939690          3000
+          jpeg_q50 jpeg_compression                  {"quality": 50}             0.979333           0.603333                    0.968667               0.827333             0.010667           0.224000                  0.936578          3000
+
+Margin metrics
+      condition  mean_top1_top2_margin  median_top1_top2_margin  low_margin_rate_lt_0.20  sample_count
+          clean               0.975569                 0.999878                 0.008000          3000
+random_eps_0.03               0.975479                 0.999878                 0.007667          3000
+  fgsm_eps_0.03               0.807507                 0.972174                 0.074000          3000
+   pgd_eps_0.03               0.856627                 0.986083                 0.046333          3000

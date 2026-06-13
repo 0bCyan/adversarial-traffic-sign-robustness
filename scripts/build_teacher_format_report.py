@@ -260,6 +260,41 @@ def part2(doc, data):
         [1900, 3600, 3860],
         "本表解释攻击实验中的核心参数。特别注意：epsilon 是在归一化 tensor 空间设置的，反归一化到像素空间后 epsilon=0.03 约为 2/255 级别，因此实际扰动很小。",
     )
+    h2(doc, "2.3.1 两种攻击方式的机制对比：FGSM 与 PGD")
+    add_para(
+        doc,
+        "本项目不是只做一种攻击，而是选择 FGSM 和 PGD 两种代表性白盒攻击。选择 FGSM 是因为它是最经典、最容易解释的单步梯度攻击，可以作为快速攻击基线；选择 PGD 是因为它通过多步迭代近似求解 epsilon 约束下的最坏扰动，通常被视为更强的鲁棒性评估基线。两者的区别不在于是否“加噪声”，而在于如何利用模型梯度搜索让损失增大的扰动方向。",
+    )
+    add_formula(doc, "FGSM: x_adv = Clip(x + epsilon * sign(grad_x L(f_theta(x), y)))")
+    add_formula(doc, "PGD: x_{t+1} = Proj_{B_inf(x,epsilon)}(x_t + alpha * sign(grad_x L(f_theta(x_t), y)))")
+    rows = [
+        ("FGSM", "Fast Gradient Sign Method，快速梯度符号法", "单步", "只在原图 x 上计算一次输入梯度", "速度快、实现简单，适合做基础攻击基线", "搜索不充分，容易低估模型脆弱性"),
+        ("PGD", "Projected Gradient Descent，投影梯度下降/上升攻击", "多步", "每一步更新后投影回 Linf epsilon 球", "攻击更强，更接近局部最坏情况", "计算更慢，需要设置 alpha 和 steps"),
+    ]
+    table(
+        doc,
+        "FGSM 与 PGD 攻击机制对比",
+        ["攻击", "中文含义", "更新方式", "核心逻辑", "优点", "局限"],
+        rows,
+        [900, 2100, 1000, 2100, 1600, 1660],
+        "本表补充两种攻击方式的原理解读。FGSM 依赖一次线性近似，PGD 则在同一扰动预算内反复寻找更强方向。因此当 epsilon 相同时，PGD 通常比 FGSM 更能暴露模型鲁棒性问题。",
+        font_size=7.8,
+    )
+    rows = [
+        ("epsilon", "FGSM 的总扰动幅度，也是 PGD 的扰动球半径", "控制攻击预算；本项目主要解释 eps=0.03 和 0.05"),
+        ("alpha", "PGD 每一步的更新步长", "如果 alpha 太小，搜索慢；太大，可能在边界附近震荡"),
+        ("steps", "PGD 迭代次数", "步数越多，搜索越充分，但计算成本越高"),
+        ("projection", "投影操作", "保证 PGD 每次更新后仍满足 Linf 约束，不让攻击变成无限制改图"),
+        ("Clip", "裁剪到合法像素范围", "保证对抗样本仍对应合法图像输入"),
+    ]
+    table(
+        doc,
+        "攻击公式中关键参数解释",
+        ["参数/操作", "解释", "为什么重要"],
+        rows,
+        [1900, 3400, 4060],
+        "本表专门解释公式中的参数。这样报告不仅展示攻击结果，也说明为什么 PGD 需要 alpha、steps 和 projection，而 FGSM 只需要 epsilon。",
+    )
     figure(
         doc,
         "fig_25_attack_threat_model.png",
@@ -282,6 +317,32 @@ def part2(doc, data):
         rows,
         [2300, 3000, 4060],
         "本表说明防御不是重新训练模型，而是在输入进入 ResNet18 前做像素空间变换。它的优点是部署简单，缺点是面对自适应攻击时可能被绕过。",
+    )
+    h2(doc, "2.4.1 三种输入防御的原理细化")
+    add_para(
+        doc,
+        "输入预处理防御的共同思想是：对抗扰动虽然幅度小，但往往包含模型敏感的高频或局部方向变化。若在送入模型前对图像做空间平滑、局部统计替换或有损压缩，可能破坏这部分扰动结构，使样本重新落回模型较稳定的分类区域。不过，这类方法也可能同时损伤交通标志的边缘、数字和纹理，因此必须分析防御收益和 clean accuracy 损失。",
+    )
+    rows = [
+        ("Gaussian Blur", "空间域线性平滑", "使用高斯核对邻域像素加权平均", "削弱连续高频噪声和细小纹理变化", "sigma 越大越平滑，边缘越容易变糊"),
+        ("Median Filter", "空间域非线性滤波", "用窗口内中位数替换中心像素", "抑制局部突变像素，保留部分边缘", "kernel 越大，去噪更强，但小数字和细线可能被抹掉"),
+        ("JPEG Compression", "频域有损压缩", "DCT 变换后量化高频系数，再重建图像", "丢弃部分高频扰动，对当前攻击恢复明显", "quality 越低压缩越强，正常图像细节损失越大"),
+    ]
+    table(
+        doc,
+        "三种输入防御的机制、参数和局限",
+        ["防御", "处理域", "工作机制", "为什么能防御", "参数影响/局限"],
+        rows,
+        [1350, 1500, 2600, 2300, 1610],
+        "本表补充防御原理解读。Gaussian 和 Median 属于空间域处理，直接改变像素邻域；JPEG 属于频域压缩，主要影响高频信息。它们都不是“修复模型”，而是改变输入分布。",
+        font_size=7.8,
+    )
+    add_formula(doc, "Gaussian Blur: I'(u,v) = sum_{i,j} G_sigma(i,j) * I(u-i, v-j)")
+    add_formula(doc, "Median Filter: I'(u,v) = median{ I(u+i, v+j) | (i,j) in local window }")
+    add_formula(doc, "JPEG: image -> block DCT -> quantization -> inverse DCT -> compressed image")
+    add_para(
+        doc,
+        "从原理上看，Gaussian Blur 更适合处理连续平滑噪声，Median Filter 更适合处理局部异常点，JPEG Compression 更适合去除高频细节。对抗扰动不一定完全等同于自然噪声，因此三种方法的效果必须通过实验比较，不能只凭直觉判断。",
     )
     figure(
         doc,
@@ -456,6 +517,30 @@ def part4(doc, data):
         "该图分析的不只是是否预测错误，还包括模型信心如何变化。置信度下降说明扰动让模型的决策变得不稳定，即使某些样本还没被完全攻破，也已经靠近决策边界。",
         width=5.95,
     )
+    h2(doc, "4.2.1 两种攻击方式的结果解读")
+    fgsm003 = attack_df[(attack_df.attack == "fgsm") & (np.isclose(attack_df.epsilon, 0.03))].iloc[0]
+    pgd003 = attack_df[(attack_df.attack == "pgd") & (np.isclose(attack_df.epsilon, 0.03))].iloc[0]
+    fgsm005 = attack_df[(attack_df.attack == "fgsm") & (np.isclose(attack_df.epsilon, 0.05))].iloc[0]
+    pgd005 = attack_df[(attack_df.attack == "pgd") & (np.isclose(attack_df.epsilon, 0.05))].iloc[0]
+    rows = [
+        ("epsilon=0.03", "FGSM", pct(fgsm003.adversarial_accuracy), pct(fgsm003.attack_success_rate), "单步攻击已能显著降低准确率"),
+        ("epsilon=0.03", "PGD", pct(pgd003.adversarial_accuracy), pct(pgd003.attack_success_rate), "PGD 更低，说明多步搜索找到更强扰动"),
+        ("epsilon=0.05", "FGSM", pct(fgsm005.adversarial_accuracy), pct(fgsm005.attack_success_rate), "扰动预算增大后单步攻击也变强"),
+        ("epsilon=0.05", "PGD", pct(pgd005.adversarial_accuracy), pct(pgd005.attack_success_rate), "PGD 仍保持强攻击，但与 FGSM 差距缩小"),
+    ]
+    table(
+        doc,
+        "FGSM 与 PGD 关键结果对照",
+        ["场景", "攻击", "Adv. Acc.", "Success", "解读"],
+        rows,
+        [1500, 1000, 1600, 1600, 3660],
+        "本表直接比较两种攻击。epsilon=0.03 时 PGD 准确率低于 FGSM，说明在相同最大扰动幅度下，多步投影优化更容易找到模型敏感方向。epsilon=0.05 时 FGSM 也很强，是因为扰动预算更大，单步方向已经足以跨过更多决策边界。",
+        font_size=8.2,
+    )
+    add_para(
+        doc,
+        "从算法角度解释：FGSM 只在原始点 x 处看一次梯度，等价于用局部线性近似估计最坏方向；如果模型损失曲面在 epsilon 邻域内并非严格线性，单步近似就可能不够充分。PGD 每次更新后都在新点重新计算梯度，因此能沿着损失曲面逐步逼近更高损失区域。这也是 PGD 在鲁棒性评估中更常作为强攻击基线的原因。",
+    )
 
     h2(doc, "4.3 扰动可感知性：证明不是明显改图")
     pert_df = data["perturbation"]
@@ -614,6 +699,39 @@ def part4(doc, data):
         "输入防御恢复样例",
         "该图展示 Original、Attack 和 Defense 三列。它说明防御不是重新训练模型，而是对同一对抗图像做输入变换后重新识别；绿色结果表示防御恢复了正确预测。",
         width=6.20,
+    )
+    h2(doc, "4.7.1 防御效果的原理解读")
+    fixed_rows = []
+    for attack_name, eps in [("fgsm", 0.03), ("pgd", 0.03), ("pgd", 0.05)]:
+        subset = defense_df[(defense_df.attack == attack_name) & (np.isclose(defense_df.epsilon, eps))]
+        before = subset.iloc[0].adversarial_accuracy_before_defense
+        best = subset.sort_values("defended_accuracy", ascending=False).iloc[0]
+        fixed_rows.append(
+            [
+                attack_name.upper(),
+                num(eps, 2),
+                pct(before),
+                best.defense,
+                pct(best.defended_accuracy),
+                pct(best.defended_accuracy - before),
+            ]
+        )
+    table(
+        doc,
+        "防御恢复效果摘要",
+        ["Attack", "Eps", "Before", "Best Defense", "After", "Gain"],
+        fixed_rows,
+        [1000, 900, 1500, 2500, 1500, 1960],
+        "本表把防御结果压缩成最关键的恢复量。JPEG Compression 在多个场景下表现最好，说明当前对抗扰动中有相当一部分可被有损压缩破坏。但 Gain 仍不能让模型完全回到 clean accuracy，说明输入预处理只能部分防御。",
+        font_size=8.2,
+    )
+    add_para(
+        doc,
+        "为什么 JPEG Compression 效果较好：JPEG 会把图像分块后做 DCT 频域变换，再对高频系数量化。许多对抗扰动虽然在像素幅度上很小，但会表现为高频、局部、方向性的变化；压缩过程会丢弃一部分高频细节，因此能破坏扰动结构。为什么 Gaussian Blur 和 Median Filter 也有效但较弱：它们主要在空间域平滑或替换局部像素，对某些高频扰动有抑制作用，但可能无法完全消除梯度攻击形成的全局方向性变化。",
+    )
+    add_para(
+        doc,
+        "防御局限也必须说明：输入预处理是在模型外部改变输入，不改变 ResNet18 的决策边界。如果攻击者知道防御存在，可以设计自适应攻击，把 JPEG 或滤波近似纳入攻击流程，防御效果可能下降。因此本项目把输入预处理作为轻量防御基线，而不是最终安全方案。",
     )
 
     sweep_df = data["defense_sweep"].sort_values("pgd_defended_accuracy", ascending=False)

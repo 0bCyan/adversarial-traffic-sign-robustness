@@ -1,0 +1,16 @@
+experiment_name: 05_streamlit_demo
+
+data:
+  image_size: 64
+
+model:
+  checkpoint: results/01_baseline/resnet18/checkpoints/best_model.pth
+
+attack:
+  default_method: fgsm
+  default_epsilon: 0.03
+  pgd_alpha: 0.005
+  pgd_steps: 7
+
+defense:
+  jpeg_quality: 75

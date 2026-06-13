@@ -493,6 +493,113 @@ def plot_robustness(robust_df: pd.DataFrame, baseline_metrics_path: Path, figure
     plt.close(fig)
 
 
+def build_strategy_comparison(
+    robust_df: pd.DataFrame,
+    baseline_metrics_path: Path,
+    input_defense_metrics_path: Path,
+    jpeg_quality: int,
+    metrics_dir: Path,
+    figure_dir: Path,
+) -> pd.DataFrame:
+    baseline_df = pd.read_csv(baseline_metrics_path) if baseline_metrics_path.exists() else pd.DataFrame()
+    input_df = pd.read_csv(input_defense_metrics_path) if input_defense_metrics_path.exists() else pd.DataFrame()
+    rows = []
+
+    if not baseline_df.empty:
+        clean_accuracy = float(baseline_df["clean_accuracy"].iloc[0])
+        rows.append(
+            {
+                "strategy": "baseline",
+                "attack": "clean",
+                "epsilon": 0.0,
+                "accuracy": clean_accuracy,
+                "note": "clean accuracy from baseline attack evaluation",
+            }
+        )
+        for row in baseline_df.itertuples(index=False):
+            rows.append(
+                {
+                    "strategy": "baseline",
+                    "attack": row.attack,
+                    "epsilon": float(row.epsilon),
+                    "accuracy": float(row.adversarial_accuracy),
+                    "note": "no defense",
+                }
+            )
+
+    if not input_df.empty:
+        jpeg_rows = input_df[input_df["defense"] == "jpeg_compression"]
+        for row in jpeg_rows.itertuples(index=False):
+            rows.append(
+                {
+                    "strategy": f"jpeg_compression_q{jpeg_quality}",
+                    "attack": row.attack,
+                    "epsilon": float(row.epsilon),
+                    "accuracy": float(row.defended_accuracy),
+                    "note": "input preprocessing defense",
+                }
+            )
+
+    for row in robust_df.itertuples(index=False):
+        rows.append(
+            {
+                "strategy": "adversarial_training",
+                "attack": row.attack,
+                "epsilon": float(row.epsilon),
+                "accuracy": float(row.accuracy),
+                "note": "FGSM adversarially trained model",
+            }
+        )
+
+    comparison_df = pd.DataFrame(rows)
+    comparison_df.to_csv(metrics_dir / "defense_strategy_comparison.csv", index=False, encoding="utf-8-sig")
+    if comparison_df.empty:
+        return comparison_df
+
+    eps = 0.03
+    eps_df = comparison_df[(comparison_df["attack"].isin(["fgsm", "pgd"])) & np.isclose(comparison_df["epsilon"], eps)]
+    if not eps_df.empty:
+        labels = [f"{row.attack}\n{row.strategy}" for row in eps_df.itertuples(index=False)]
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.bar(labels, eps_df["accuracy"].tolist())
+        ax.set_title("Defense Strategy Comparison at Epsilon=0.03")
+        ax.set_ylabel("Accuracy")
+        ax.set_ylim(0, 1.02)
+        ax.tick_params(axis="x", rotation=20)
+        ax.grid(axis="y", alpha=0.25)
+        fig.tight_layout()
+        fig.savefig(figure_dir / "defense_strategy_comparison_eps003.png", dpi=200)
+        plt.close(fig)
+
+    clean_df = comparison_df[comparison_df["attack"] == "clean"]
+    robust_eps = comparison_df[(comparison_df["attack"].isin(["fgsm", "pgd"])) & np.isclose(comparison_df["epsilon"], eps)]
+    if not clean_df.empty and not robust_eps.empty:
+        fig, ax = plt.subplots(figsize=(8, 5))
+        for strategy in sorted(comparison_df["strategy"].unique()):
+            clean_value = clean_df[clean_df["strategy"] == strategy]
+            robust_value = robust_eps[robust_eps["strategy"] == strategy]
+            if clean_value.empty or robust_value.empty:
+                continue
+            ax.scatter(
+                float(clean_value.iloc[0]["accuracy"]),
+                float(robust_value["accuracy"].mean()),
+                label=strategy,
+                s=80,
+            )
+        ax.set_title("Clean Accuracy vs Mean Robust Accuracy")
+        ax.set_xlabel("Clean accuracy")
+        ax.set_ylabel("Mean robust accuracy at epsilon=0.03")
+        ax.set_xlim(0, 1.02)
+        ax.set_ylim(0, 1.02)
+        ax.grid(alpha=0.25)
+        ax.legend()
+        fig.tight_layout()
+        fig.savefig(figure_dir / "clean_vs_robust_tradeoff.png", dpi=200)
+        plt.close(fig)
+
+    return comparison_df
+
+
 def copy_report_assets(dirs: dict[str, Path], report_figure_dir: Path, report_table_dir: Path) -> None:
     report_figure_dir.mkdir(parents=True, exist_ok=True)
     report_table_dir.mkdir(parents=True, exist_ok=True)
@@ -501,6 +608,8 @@ def copy_report_assets(dirs: dict[str, Path], report_figure_dir: Path, report_ta
         "adversarial_training_accuracy_curve.png": "fig_21_adv_training_accuracy_curve.png",
         "adversarial_training_robust_accuracy_curve.png": "fig_22_adv_training_robust_curve.png",
         "adversarial_training_eps003_bar.png": "fig_23_adv_training_eps003_bar.png",
+        "defense_strategy_comparison_eps003.png": "fig_24_defense_strategy_comparison.png",
+        "clean_vs_robust_tradeoff.png": "fig_25_clean_vs_robust_tradeoff.png",
     }
     for src_name, dst_name in figure_map.items():
         src = dirs["figures"] / src_name
@@ -509,11 +618,12 @@ def copy_report_assets(dirs: dict[str, Path], report_figure_dir: Path, report_ta
 
     sample = dirs["samples"] / "adversarial_training_pgd_eps003_robust_examples.png"
     if sample.exists():
-        shutil.copy2(sample, report_figure_dir / "fig_24_adv_training_robust_examples.png")
+        shutil.copy2(sample, report_figure_dir / "fig_26_adv_training_robust_examples.png")
 
     for src_name, dst_name in {
         "train_log.csv": "table_08_adv_training_train_log.csv",
         "robust_metrics.csv": "table_09_adv_training_robust_metrics.csv",
+        "defense_strategy_comparison.csv": "table_10_defense_strategy_comparison.csv",
     }.items():
         src = dirs["metrics"] / src_name
         if src.exists():
@@ -621,6 +731,14 @@ def main() -> None:
     plot_robustness(
         robust_df,
         Path(config["evaluation"].get("baseline_attack_metrics", "results/02_attack/fgsm_pgd/metrics/attack_metrics.csv")),
+        dirs["figures"],
+    )
+    build_strategy_comparison(
+        robust_df,
+        Path(config["evaluation"].get("baseline_attack_metrics", "results/02_attack/fgsm_pgd/metrics/attack_metrics.csv")),
+        Path(config["evaluation"].get("input_defense_metrics", "results/03_defense/input_preprocessing/metrics/input_defense_metrics.csv")),
+        int(config["evaluation"].get("jpeg_quality", 75)),
+        dirs["metrics"],
         dirs["figures"],
     )
     copy_report_assets(

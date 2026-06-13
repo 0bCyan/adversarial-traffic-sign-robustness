@@ -78,10 +78,13 @@ GTSRB 数据集
 - FGSM / PGD 对抗攻击评估。
 - Gaussian Blur / Median Filter / JPEG Compression 输入预处理防御。
 
-暂未纳入正式结果：
+新增补强入口：
 
-- 对抗训练防御，代码和配置已准备，但完整实验尚未跑完。
-- Grad-CAM 可解释性分析。
+- 对抗训练防御：训练后自动生成 baseline / JPEG Compression / adversarial training 对比表。
+- Grad-CAM 可解释性分析：输出 clean / attack / defense 三列热力图。
+- JPEG Compression 参数消融：比较 quality 50 / 75 / 90 的鲁棒准确率和 clean accuracy 代价。
+- 全测试集关键配置验证：FGSM epsilon=0.03、PGD epsilon=0.03、JPEG under PGD epsilon=0.03。
+- 推理、攻击与防御耗时统计。
 - Streamlit Demo。
 
 当前结果汇总见 [reports/result_summary.md](reports/result_summary.md)。  
@@ -126,11 +129,45 @@ python -m src.evaluate_input_defense --config configs/defense_input_preprocessin
 python -m src.train_adversarial --config configs/defense_adversarial_training.yaml
 ```
 
+生成 Grad-CAM 可解释性案例：
+
+```bash
+python -m src.visualization.gradcam_analysis --config configs/explainability_gradcam.yaml
+```
+
+运行 JPEG quality 消融：
+
+```bash
+python -m src.evaluate_jpeg_ablation --config configs/defense_jpeg_ablation.yaml
+```
+
+统计推理、攻击和防御耗时：
+
+```bash
+python -m src.benchmark_runtime --config configs/runtime_benchmark.yaml
+```
+
+运行全测试集关键配置验证：
+
+```bash
+python -m src.evaluate_attacks --config configs/attack_fgsm_pgd_full_test.yaml
+python -m src.evaluate_input_defense --config configs/defense_input_preprocessing_full_test.yaml
+```
+
+启动 Streamlit Demo：
+
+```bash
+streamlit run src/demo/streamlit_app.py
+```
+
 输出位置：
 
 - 完整结果：`results/00_dataset_check/`
 - 报告图片：`reports/figures/`
 - 报告表格：`reports/tables/`
+
+注意：`data/raw/` 和模型权重 `.pth` 默认不提交。若缺少
+`results/01_baseline/resnet18/checkpoints/best_model.pth`，请先运行基础模型训练命令。
 
 ## 结果保存原则
 

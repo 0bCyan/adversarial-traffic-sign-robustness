@@ -1,0 +1,35 @@
+experiment_name: 03_defense_jpeg_quality_ablation
+seed: 42
+
+data:
+  dataset: GTSRB
+  root: data/raw
+  image_size: 64
+  batch_size: 128
+  num_workers: 4
+  selected_indices: results/02_attack/fgsm_pgd/metrics/selected_eval_indices.csv
+  max_eval_samples: 3000
+  download: false
+
+model:
+  checkpoint: results/01_baseline/resnet18/checkpoints/best_model.pth
+
+attacks:
+  clean:
+    epsilons: [0.0]
+  fgsm:
+    epsilons: [0.03, 0.05]
+  pgd:
+    epsilons: [0.03, 0.05]
+    alpha: 0.005
+    steps: 7
+
+defense:
+  method: jpeg_compression
+  qualities: [50, 75, 90]
+
+outputs:
+  result_dir: results/03_defense/jpeg_quality_ablation
+  report_figure_dir: reports/figures
+  report_table_dir: reports/tables
+  max_cases_per_grid: 9

@@ -69,6 +69,69 @@ GTSRB 数据集
 
 详见 [实验与实现计划](docs/experiment_implementation_plan.md)。
 
+## 当前进度
+
+已完成并可写入报告：
+
+- GTSRB 数据集检查与可视化。
+- ResNet18 基础识别训练。
+- FGSM / PGD 对抗攻击评估。
+- Gaussian Blur / Median Filter / JPEG Compression 输入预处理防御。
+
+暂未纳入正式结果：
+
+- 对抗训练防御，代码和配置已准备，但完整实验尚未跑完。
+- Grad-CAM 可解释性分析。
+- Streamlit Demo。
+
+当前结果汇总见 [reports/result_summary.md](reports/result_summary.md)。  
+报告草稿见 [reports/draft_report.md](reports/draft_report.md)。  
+图表索引见 [reports/figure_table_index.md](reports/figure_table_index.md)。
+
+## 快速开始
+
+安装依赖：
+
+```bash
+pip install -r requirements.txt
+```
+
+运行数据集检查并生成报告素材：
+
+```bash
+python -m src.data.check_gtsrb --config configs/dataset_check.yaml
+```
+
+训练基础识别模型：
+
+```bash
+python -m src.train_classifier --config configs/baseline_resnet18.yaml
+```
+
+评估 FGSM / PGD 对抗攻击：
+
+```bash
+python -m src.evaluate_attacks --config configs/attack_fgsm_pgd.yaml
+```
+
+评估输入预处理防御：
+
+```bash
+python -m src.evaluate_input_defense --config configs/defense_input_preprocessing.yaml
+```
+
+进行 FGSM 对抗训练防御：
+
+```bash
+python -m src.train_adversarial --config configs/defense_adversarial_training.yaml
+```
+
+输出位置：
+
+- 完整结果：`results/00_dataset_check/`
+- 报告图片：`reports/figures/`
+- 报告表格：`reports/tables/`
+
 ## 结果保存原则
 
 每个实验都必须保存：
@@ -80,4 +143,3 @@ GTSRB 数据集
 - 精选报告素材：复制或导出到 `reports/figures/` 和 `reports/tables/`。
 
 详见 [结果保存规范](docs/result_saving_guide.md)。
-

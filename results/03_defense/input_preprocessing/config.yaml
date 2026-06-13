@@ -1,0 +1,38 @@
+experiment_name: 03_defense_input_preprocessing
+seed: 42
+
+data:
+  dataset: GTSRB
+  root: data/raw
+  image_size: 64
+  batch_size: 128
+  num_workers: 4
+  selected_indices: results/02_attack/fgsm_pgd/metrics/selected_eval_indices.csv
+  max_eval_samples: 3000
+
+model:
+  checkpoint: results/01_baseline/resnet18/checkpoints/best_model.pth
+
+attacks:
+  fgsm:
+    epsilons: [0.03, 0.05]
+  pgd:
+    epsilons: [0.03, 0.05]
+    alpha: 0.005
+    steps: 7
+
+defenses:
+  gaussian_blur:
+    kernel_size: 3
+    sigma: 0.6
+  median_filter:
+    kernel_size: 3
+  jpeg_compression:
+    quality: 75
+
+outputs:
+  result_dir: results/03_defense/input_preprocessing
+  report_figure_dir: reports/figures
+  report_table_dir: reports/tables
+  max_cases_per_grid: 9
+

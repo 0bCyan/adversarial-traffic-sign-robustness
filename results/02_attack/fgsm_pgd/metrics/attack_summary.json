@@ -1,0 +1,94 @@
+{
+  "metrics": [
+    {
+      "attack": "fgsm",
+      "epsilon": 0.005,
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy": 0.9526666666666667,
+      "attack_success_rate": 0.02722940776038121,
+      "mean_confidence_drop": 0.014137663811445236,
+      "total_images": 3000
+    },
+    {
+      "attack": "fgsm",
+      "epsilon": 0.01,
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy": 0.9013333333333333,
+      "attack_success_rate": 0.07964601769911504,
+      "mean_confidence_drop": 0.032203702678283055,
+      "total_images": 3000
+    },
+    {
+      "attack": "fgsm",
+      "epsilon": 0.02,
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy": 0.7826666666666666,
+      "attack_success_rate": 0.20081688223281144,
+      "mean_confidence_drop": 0.06720167801777521,
+      "total_images": 3000
+    },
+    {
+      "attack": "fgsm",
+      "epsilon": 0.03,
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy": 0.671,
+      "attack_success_rate": 0.31484002722940774,
+      "mean_confidence_drop": 0.10108251604437828,
+      "total_images": 3000
+    },
+    {
+      "attack": "fgsm",
+      "epsilon": 0.05,
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy": 0.5023333333333333,
+      "attack_success_rate": 0.4870660313138189,
+      "mean_confidence_drop": 0.1507443035642306,
+      "total_images": 3000
+    },
+    {
+      "attack": "pgd",
+      "epsilon": 0.005,
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy": 0.9466666666666667,
+      "attack_success_rate": 0.033356024506466984,
+      "mean_confidence_drop": 0.013716509819030762,
+      "total_images": 3000
+    },
+    {
+      "attack": "pgd",
+      "epsilon": 0.01,
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy": 0.8683333333333333,
+      "attack_success_rate": 0.1133424098025868,
+      "mean_confidence_drop": 0.032473616401354474,
+      "total_images": 3000
+    },
+    {
+      "attack": "pgd",
+      "epsilon": 0.02,
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy": 0.6896666666666667,
+      "attack_success_rate": 0.2957794417971409,
+      "mean_confidence_drop": 0.05680414519707362,
+      "total_images": 3000
+    },
+    {
+      "attack": "pgd",
+      "epsilon": 0.03,
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy": 0.6,
+      "attack_success_rate": 0.3873383253914227,
+      "mean_confidence_drop": 0.0648234531680743,
+      "total_images": 3000
+    },
+    {
+      "attack": "pgd",
+      "epsilon": 0.05,
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy": 0.5426666666666666,
+      "attack_success_rate": 0.44588155207624236,
+      "mean_confidence_drop": 0.06963891876737277,
+      "total_images": 3000
+    }
+  ]
+}

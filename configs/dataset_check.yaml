@@ -1,0 +1,15 @@
+experiment_name: 00_dataset_check
+seed: 42
+
+data:
+  dataset: GTSRB
+  root: data/raw
+  download: true
+  sample_grid_per_split: 36
+  image_size_preview: 96
+
+outputs:
+  result_dir: results/00_dataset_check
+  report_figure_dir: reports/figures
+  report_table_dir: reports/tables
+

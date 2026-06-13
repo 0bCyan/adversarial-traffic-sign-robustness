@@ -1,0 +1,136 @@
+{
+  "metrics": [
+    {
+      "attack": "fgsm",
+      "epsilon": 0.03,
+      "defense": "gaussian_blur",
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy_before_defense": 0.671,
+      "defended_accuracy": 0.718,
+      "recovery_rate_on_successful_attacks": 0.15243243243243243,
+      "mean_defended_confidence": 0.8989084335168203,
+      "total_images": 3000
+    },
+    {
+      "attack": "fgsm",
+      "epsilon": 0.03,
+      "defense": "median_filter",
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy_before_defense": 0.671,
+      "defended_accuracy": 0.7106666666666667,
+      "recovery_rate_on_successful_attacks": 0.13513513513513514,
+      "mean_defended_confidence": 0.8954700078417858,
+      "total_images": 3000
+    },
+    {
+      "attack": "fgsm",
+      "epsilon": 0.03,
+      "defense": "jpeg_compression",
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy_before_defense": 0.671,
+      "defended_accuracy": 0.7936666666666666,
+      "recovery_rate_on_successful_attacks": 0.4,
+      "mean_defended_confidence": 0.9186508804510037,
+      "total_images": 3000
+    },
+    {
+      "attack": "fgsm",
+      "epsilon": 0.05,
+      "defense": "gaussian_blur",
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy_before_defense": 0.5023333333333333,
+      "defended_accuracy": 0.5576666666666666,
+      "recovery_rate_on_successful_attacks": 0.11740041928721175,
+      "mean_defended_confidence": 0.8569725090861321,
+      "total_images": 3000
+    },
+    {
+      "attack": "fgsm",
+      "epsilon": 0.05,
+      "defense": "median_filter",
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy_before_defense": 0.5023333333333333,
+      "defended_accuracy": 0.5476666666666666,
+      "recovery_rate_on_successful_attacks": 0.103424178895877,
+      "mean_defended_confidence": 0.8520551583518584,
+      "total_images": 3000
+    },
+    {
+      "attack": "fgsm",
+      "epsilon": 0.05,
+      "defense": "jpeg_compression",
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy_before_defense": 0.5023333333333333,
+      "defended_accuracy": 0.627,
+      "recovery_rate_on_successful_attacks": 0.2620545073375262,
+      "mean_defended_confidence": 0.8673480651030938,
+      "total_images": 3000
+    },
+    {
+      "attack": "pgd",
+      "epsilon": 0.03,
+      "defense": "gaussian_blur",
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy_before_defense": 0.603,
+      "defended_accuracy": 0.6733333333333333,
+      "recovery_rate_on_successful_attacks": 0.18777679362267494,
+      "mean_defended_confidence": 0.9289616751869519,
+      "total_images": 3000
+    },
+    {
+      "attack": "pgd",
+      "epsilon": 0.03,
+      "defense": "median_filter",
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy_before_defense": 0.603,
+      "defended_accuracy": 0.678,
+      "recovery_rate_on_successful_attacks": 0.20372010628875112,
+      "mean_defended_confidence": 0.9289604593217373,
+      "total_images": 3000
+    },
+    {
+      "attack": "pgd",
+      "epsilon": 0.03,
+      "defense": "jpeg_compression",
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy_before_defense": 0.603,
+      "defended_accuracy": 0.7943333333333333,
+      "recovery_rate_on_successful_attacks": 0.508414526129318,
+      "mean_defended_confidence": 0.938737409333388,
+      "total_images": 3000
+    },
+    {
+      "attack": "pgd",
+      "epsilon": 0.05,
+      "defense": "gaussian_blur",
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy_before_defense": 0.5446666666666666,
+      "defended_accuracy": 0.6133333333333333,
+      "recovery_rate_on_successful_attacks": 0.1579754601226994,
+      "mean_defended_confidence": 0.9261399776935577,
+      "total_images": 3000
+    },
+    {
+      "attack": "pgd",
+      "epsilon": 0.05,
+      "defense": "median_filter",
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy_before_defense": 0.5446666666666666,
+      "defended_accuracy": 0.6153333333333333,
+      "recovery_rate_on_successful_attacks": 0.16487730061349692,
+      "mean_defended_confidence": 0.9261086799701055,
+      "total_images": 3000
+    },
+    {
+      "attack": "pgd",
+      "epsilon": 0.05,
+      "defense": "jpeg_compression",
+      "clean_accuracy": 0.9793333333333333,
+      "adversarial_accuracy_before_defense": 0.5446666666666666,
+      "defended_accuracy": 0.7173333333333334,
+      "recovery_rate_on_successful_attacks": 0.39800613496932513,
+      "mean_defended_confidence": 0.9299333410908779,
+      "total_images": 3000
+    }
+  ]
+}

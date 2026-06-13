@@ -1,0 +1,44 @@
+﻿class_id,class_name,train_count,test_count,total_count
+0,Speed limit 20,150,60,210
+1,Speed limit 30,1500,720,2220
+2,Speed limit 50,1500,750,2250
+3,Speed limit 60,960,450,1410
+4,Speed limit 70,1320,660,1980
+5,Speed limit 80,1260,630,1890
+6,End speed limit 80,300,150,450
+7,Speed limit 100,960,450,1410
+8,Speed limit 120,960,450,1410
+9,No passing,990,480,1470
+10,No passing trucks,1350,660,2010
+11,Priority at next intersection,900,420,1320
+12,Priority road,1410,690,2100
+13,Yield,1440,720,2160
+14,Stop,540,270,810
+15,No vehicles,420,210,630
+16,Trucks prohibited,300,150,450
+17,No entry,750,360,1110
+18,General caution,810,390,1200
+19,Dangerous curve left,150,60,210
+20,Dangerous curve right,240,90,330
+21,Double curve,240,90,330
+22,Bumpy road,270,120,390
+23,Slippery road,360,150,510
+24,Road narrows right,180,90,270
+25,Road work,1020,480,1500
+26,Traffic signals,420,180,600
+27,Pedestrians,180,60,240
+28,Children crossing,360,150,510
+29,Bicycles crossing,180,90,270
+30,Beware of ice/snow,300,150,450
+31,Wild animals crossing,540,270,810
+32,End speed and passing limits,180,60,240
+33,Turn right ahead,480,210,690
+34,Turn left ahead,300,120,420
+35,Ahead only,810,390,1200
+36,Go straight or right,270,120,390
+37,Go straight or left,150,60,210
+38,Keep right,1380,690,2070
+39,Keep left,210,90,300
+40,Roundabout mandatory,240,90,330
+41,End no passing,180,60,240
+42,End no passing trucks,180,90,270

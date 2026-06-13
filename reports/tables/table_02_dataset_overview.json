@@ -1,0 +1,12 @@
+{
+  "train_images": 26640,
+  "test_images": 12630,
+  "total_images": 39270,
+  "num_classes": 43,
+  "min_width": 25,
+  "max_width": 266,
+  "min_height": 25,
+  "max_height": 232,
+  "mean_width": 50.79676597911892,
+  "mean_height": 50.36490960020372
+}

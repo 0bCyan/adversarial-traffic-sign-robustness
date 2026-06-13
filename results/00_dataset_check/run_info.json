@@ -1,0 +1,11 @@
+{
+  "experiment_name": "00_dataset_check",
+  "created_at": "2026-06-13T15:37:37",
+  "python": "3.13.12 | packaged by Anaconda, Inc. | (main, Feb 24 2026, 16:05:56) [MSC v.1942 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "torch": "2.7.1+cu118",
+  "torchvision": "0.22.1+cu118",
+  "cuda_available": true,
+  "git_commit": "f8723e5",
+  "command": "D:\\Desktop\\work\\adversarial-traffic-sign-robustness\\src\\data\\check_gtsrb.py --config configs/dataset_check.yaml"
+}

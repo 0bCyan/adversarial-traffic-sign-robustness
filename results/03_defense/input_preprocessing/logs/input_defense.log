@@ -1,0 +1,13 @@
+attack  epsilon          defense  clean_accuracy  adversarial_accuracy_before_defense  defended_accuracy  recovery_rate_on_successful_attacks  mean_defended_confidence  total_images
+  fgsm     0.03    gaussian_blur        0.979333                             0.671000           0.718000                             0.152432                  0.898908          3000
+  fgsm     0.03    median_filter        0.979333                             0.671000           0.710667                             0.135135                  0.895470          3000
+  fgsm     0.03 jpeg_compression        0.979333                             0.671000           0.793667                             0.400000                  0.918651          3000
+  fgsm     0.05    gaussian_blur        0.979333                             0.502333           0.557667                             0.117400                  0.856973          3000
+  fgsm     0.05    median_filter        0.979333                             0.502333           0.547667                             0.103424                  0.852055          3000
+  fgsm     0.05 jpeg_compression        0.979333                             0.502333           0.627000                             0.262055                  0.867348          3000
+   pgd     0.03    gaussian_blur        0.979333                             0.603000           0.673333                             0.187777                  0.928962          3000
+   pgd     0.03    median_filter        0.979333                             0.603000           0.678000                             0.203720                  0.928960          3000
+   pgd     0.03 jpeg_compression        0.979333                             0.603000           0.794333                             0.508415                  0.938737          3000
+   pgd     0.05    gaussian_blur        0.979333                             0.544667           0.613333                             0.157975                  0.926140          3000
+   pgd     0.05    median_filter        0.979333                             0.544667           0.615333                             0.164877                  0.926109          3000
+   pgd     0.05 jpeg_compression        0.979333                             0.544667           0.717333                             0.398006                  0.929933          3000

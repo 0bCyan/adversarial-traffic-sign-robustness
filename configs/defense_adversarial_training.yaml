@@ -3,32 +3,45 @@ seed: 42
 
 data:
   dataset: GTSRB
+  root: data/raw
   image_size: 64
-  batch_size: 64
+  num_classes: 43
+  validation_ratio: 0.15
+  batch_size: 256
+  num_workers: 4
+  download: true
+  selected_indices: results/02_attack/fgsm_pgd/metrics/selected_eval_indices.csv
+  max_eval_samples: 3000
 
 model:
   name: resnet18
   pretrained: false
+  init_checkpoint: results/01_baseline/resnet18/checkpoints/best_model.pth
 
 training:
-  epochs: 30
+  epochs: 6
   optimizer: adamw
-  learning_rate: 0.001
+  learning_rate: 0.0002
   weight_decay: 0.0001
 
 defense:
   method: adversarial_training
   attack: fgsm
-  epsilon: 0.02
-  clean_ratio: 0.5
-  adversarial_ratio: 0.5
+  epsilon: 0.03
+  clean_weight: 0.5
+  adversarial_weight: 0.5
 
 evaluation:
   attacks: [clean, fgsm, pgd]
-  epsilons: [0.01, 0.02, 0.03, 0.05]
+  epsilons: [0.03, 0.05]
+  pgd_alpha: 0.005
+  pgd_steps: 7
+  baseline_attack_metrics: results/02_attack/fgsm_pgd/metrics/attack_metrics.csv
 
 outputs:
   result_dir: results/03_defense/adversarial_training
+  report_figure_dir: reports/figures
+  report_table_dir: reports/tables
+  max_cases_per_grid: 9
   save_robustness_table: true
   save_before_after_comparison: true
-

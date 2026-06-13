@@ -222,20 +222,21 @@ x_adv = x + epsilon * sign(grad_x J(theta, x, y))
 2. FGSM 和 PGD 能明显降低模型准确率。
 3. PGD 在 epsilon=0.03 下攻击更强。
 4. 输入预处理能部分防御，其中 JPEG Compression 效果最好。
-5. 简单输入防御仍有上限，后续可加入对抗训练。
+5. 简单输入防御仍有上限，失败案例和 BPDA 自适应攻击说明 JPEG 不是完备安全方案。
+6. FGSM 对抗训练作为模型级防御，将 PGD epsilon=0.03 鲁棒准确率提升到 88.63%。
 
 ## 19. 不足与改进
 
 不足：
 
-- 对抗训练未完整跑完，未纳入正式结果。
-- 尚未加入 Grad-CAM 可解释性分析。
 - 尚未完成交互式 Demo。
+- 尚未完成 PGD/TRADES 等更强鲁棒训练。
+- 尚未完成跨模型结构消融。
 
 改进：
 
-- 完整运行 FGSM / PGD 对抗训练。
-- 加入 Grad-CAM 展示模型关注区域变化。
+- 完整运行 PGD adversarial training 或 TRADES。
+- 补充 SimpleCNN、不同 ResNet stem 的结构消融。
 - 使用 Streamlit 做交互式攻击防御演示。
 
 ## 20. 小组分工
@@ -249,4 +250,3 @@ x_adv = x + epsilon * sign(grad_x J(theta, x, y))
 | 成员 C | 对抗攻击实现 | 20% |
 | 成员 D | 防御实验实现 | 20% |
 | 成员 E | 报告与 PPT | 20% |
-

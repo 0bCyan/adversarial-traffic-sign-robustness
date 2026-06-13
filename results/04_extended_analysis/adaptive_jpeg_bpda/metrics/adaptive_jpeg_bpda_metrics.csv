@@ -1,0 +1,2 @@
+﻿attack,epsilon,pgd_alpha,pgd_steps,jpeg_quality,total_images,clean_accuracy,standard_pgd_accuracy_before_jpeg,standard_pgd_accuracy_after_jpeg,adaptive_bpda_accuracy_after_jpeg,standard_pgd_success_rate_before_jpeg_on_clean_correct,adaptive_bpda_success_rate_after_jpeg_on_clean_correct
+pgd_bpda_jpeg,0.03,0.005,7,75,3000,0.9793333333333333,0.5996666666666667,0.7893333333333333,0.7803333333333333,0.3876786929884275,0.20319945541184478

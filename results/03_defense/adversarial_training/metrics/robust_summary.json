@@ -1,0 +1,59 @@
+{
+  "metrics": [
+    {
+      "model": "adversarial_training",
+      "attack": "clean",
+      "epsilon": 0.0,
+      "accuracy": 0.9846666666666667,
+      "mean_confidence": 0.982938409542044,
+      "total_images": 3000,
+      "training_seconds": 285.68456268310547,
+      "best_epoch": 4,
+      "best_val_accuracy": 1.0
+    },
+    {
+      "model": "adversarial_training",
+      "attack": "fgsm",
+      "epsilon": 0.03,
+      "accuracy": 0.88,
+      "mean_confidence": 0.9338040846933922,
+      "total_images": 3000,
+      "training_seconds": 285.68456268310547,
+      "best_epoch": 4,
+      "best_val_accuracy": 1.0
+    },
+    {
+      "model": "adversarial_training",
+      "attack": "fgsm",
+      "epsilon": 0.05,
+      "accuracy": 0.7783333333333333,
+      "mean_confidence": 0.8967050723334153,
+      "total_images": 3000,
+      "training_seconds": 285.68456268310547,
+      "best_epoch": 4,
+      "best_val_accuracy": 1.0
+    },
+    {
+      "model": "adversarial_training",
+      "attack": "pgd",
+      "epsilon": 0.03,
+      "accuracy": 0.8863333333333333,
+      "mean_confidence": 0.9442037213742733,
+      "total_images": 3000,
+      "training_seconds": 285.68456268310547,
+      "best_epoch": 4,
+      "best_val_accuracy": 1.0
+    },
+    {
+      "model": "adversarial_training",
+      "attack": "pgd",
+      "epsilon": 0.05,
+      "accuracy": 0.8603333333333333,
+      "mean_confidence": 0.936629461929202,
+      "total_images": 3000,
+      "training_seconds": 285.68456268310547,
+      "best_epoch": 4,
+      "best_val_accuracy": 1.0
+    }
+  ]
+}

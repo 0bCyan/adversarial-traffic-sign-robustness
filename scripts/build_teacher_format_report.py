@@ -81,6 +81,11 @@ def load_data():
         "gradcam": pd.read_csv(TABLE_DIR / "table_13_gradcam_cases.csv"),
         "jpeg_quality": pd.read_csv(TABLE_DIR / "table_14_jpeg_quality_metrics.csv"),
         "runtime": pd.read_csv(TABLE_DIR / "table_15_runtime_summary.csv"),
+        "per_class_robustness": pd.read_csv(TABLE_DIR / "table_16_per_class_robustness.csv"),
+        "defense_failure_cases": pd.read_csv(TABLE_DIR / "table_17_defense_failure_cases.csv"),
+        "adaptive_jpeg": pd.read_csv(TABLE_DIR / "table_18_adaptive_jpeg_bpda_metrics.csv"),
+        "adv_training_log": pd.read_csv(TABLE_DIR / "table_19_adv_training_train_log.csv"),
+        "adv_training_robust": pd.read_csv(TABLE_DIR / "table_20_adv_training_robust_metrics.csv"),
         "full_attack": pd.read_csv(ROOT_DIR / "results" / "02_attack" / "fgsm_pgd_full_test" / "metrics" / "attack_metrics.csv"),
         "full_defense": pd.read_csv(ROOT_DIR / "results" / "03_defense" / "input_preprocessing_full_test" / "metrics" / "input_defense_metrics.csv"),
     }
@@ -103,7 +108,7 @@ def add_cover(doc):
     rows = [
         ("课程报告类型", "期末大作业汇报报告，按老师六部分模板组织"),
         ("项目对象", "GTSRB 交通标志 43 类图像分类"),
-        ("核心算法", "ResNet18 小尺寸图像适配版 + FGSM/PGD 对抗攻击 + 输入预处理防御"),
+        ("核心算法", "ResNet18 小尺寸图像适配版 + FGSM/PGD 对抗攻击 + 输入预处理防御 + FGSM 对抗训练"),
         ("汇报重点", "不仅说明做了什么，更解释为什么这样做、算法原理是什么、图表结果说明什么"),
         ("提交日期", "2026 年 6 月"),
     ]
@@ -152,8 +157,8 @@ def part1(doc, data):
         ("输出", "43 类交通标志类别编号和概率", "ResNet18 输出 43 维 logits，再经 softmax 得到概率"),
         ("基础模型", "ResNet18", "作为识别主干网络，先建立 clean baseline"),
         ("攻击实验", "FGSM、PGD", "在 Linf 约束内构造对抗样本"),
-        ("防御实验", "Gaussian Blur、Median Filter、JPEG Compression", "不重新训练模型，评估输入预处理能否恢复准确率"),
-        ("补充验证", "随机噪声对照、PGD 步数消融、防御参数扫描", "证明攻击不是普通噪声，并分析防御权衡"),
+        ("防御实验", "Gaussian Blur、Median Filter、JPEG Compression、FGSM adversarial training", "同时比较输入级防御与模型级防御"),
+        ("补充验证", "随机噪声对照、PGD 步数消融、防御参数扫描、自适应攻击、类别鲁棒性", "证明攻击不是普通噪声，并分析防御边界"),
     ]
     table(
         doc,
@@ -356,6 +361,27 @@ def part2(doc, data):
         "输入预处理防御数据链路",
         "该图展示防御链路：对抗图像先反归一化回像素空间，再执行 Blur/Median/JPEG 变换，之后重新归一化并输入同一个冻结 ResNet18。这样可以保证防御评估只改变输入，不改变模型参数。",
         width=6.25,
+    )
+
+    h2(doc, "2.4.2 模型级防御：FGSM 对抗训练原理")
+    add_para(
+        doc,
+        "输入预处理防御只改变测试时输入，而对抗训练会改变模型参数。其核心思想是在训练阶段主动生成对抗样本，把 clean loss 和 adversarial loss 一起反向传播，使模型在原图附近的 epsilon 邻域内学习更稳定的分类边界。本项目采用 FGSM 对抗训练微调：从已训练好的 ResNet18 best checkpoint 出发，每个 batch 先生成 FGSM 样本，再用 clean 与 adversarial 两部分损失联合更新参数。",
+    )
+    add_formula(doc, "min_theta  E_{(x,y)} [ alpha * L(f_theta(x), y) + beta * L(f_theta(x_adv), y) ]")
+    add_formula(doc, "x_adv = Clip(x + epsilon * sign(grad_x L(f_theta(x), y)))")
+    rows = [
+        ("输入预处理", "测试前处理图像，模型参数不变", "部署简单、成本低", "面对自适应攻击可能被绕过"),
+        ("对抗训练", "训练时混入对抗样本并更新模型参数", "直接调整决策边界，鲁棒性提升更明显", "需要训练成本，也可能影响 clean accuracy"),
+    ]
+    table(
+        doc,
+        "输入级防御与模型级防御对比",
+        ["防御类型", "机制", "优点", "局限"],
+        rows,
+        [1500, 3100, 2500, 2260],
+        "本表解释为什么需要补充对抗训练。输入预处理证明了简单部署方案的有效性；对抗训练则进一步回答“能否从模型本身提升鲁棒性”。两者构成更完整的防御链路。",
+        font_size=8.2,
     )
 
 
@@ -945,6 +971,169 @@ def part4(doc, data):
         width=5.95,
     )
 
+    h2(doc, "4.7.5 更严格防御验证：类别鲁棒性、失败案例、自适应攻击与对抗训练")
+    add_para(
+        doc,
+        "前面的防御结果主要回答平均准确率是否提升。为了让证据链更严谨，本项目进一步补充四个验证：第一，按类别统计 PGD 脆弱性和 JPEG 恢复率；第二，展示 JPEG 仍无法恢复的失败样例；第三，使用 BPDA 思想评估攻击者知道 JPEG 防御时的自适应攻击；第四，进行 FGSM 对抗训练，验证模型级防御是否优于单纯输入预处理。",
+    )
+
+    per_class_df = data["per_class_robustness"]
+    vulnerable = per_class_df[per_class_df.clean_correct >= 5].sort_values("attack_success_rate_on_clean_correct", ascending=False).head(8)
+    rows = []
+    for _, row in vulnerable.iterrows():
+        rows.append(
+            [
+                int(row.class_id),
+                row.label_name,
+                int(row.total_images),
+                pct(row.pgd_accuracy),
+                pct(row.jpeg_defended_accuracy),
+                pct(row.attack_success_rate_on_clean_correct),
+                pct(row.recovery_rate_on_successful_attacks),
+            ]
+        )
+    table(
+        doc,
+        "PGD epsilon=0.03 下最脆弱类别示例",
+        ["Class", "Label", "Images", "PGD Acc.", "JPEG Acc.", "Attack Success", "Recovery"],
+        rows,
+        [650, 2450, 850, 1200, 1200, 1550, 1460],
+        "本表把整体平均结果拆到类别层面。Attack Success 是在 clean 正确样本中被 PGD 攻击成功的比例；Recovery 是这些成功攻击样本中被 JPEG Q75 恢复的比例。类别差异说明鲁棒性并不是均匀分布的，样本少、形状相近或细节弱的类别更容易成为薄弱点。",
+        font_size=7.3,
+    )
+    figure(
+        doc,
+        "fig_42_per_class_attack_success.png",
+        "PGD 下攻击成功率最高的类别",
+        "该图按攻击成功率排序展示最脆弱类别。End speed and passing limits、End no passing、End speed limit 80 等类别更容易被攻击，说明类别相似性和样本规模会影响模型局部决策边界。",
+        width=6.05,
+    )
+    figure(
+        doc,
+        "fig_43_per_class_defense_recovery.png",
+        "JPEG Q75 恢复率最高的类别",
+        "该图展示 JPEG 防御在不同类别上的恢复差异。某些类别恢复率很高，说明其扰动结构容易被压缩破坏；另一些类别恢复率低，说明输入预处理并非对所有类别都可靠。",
+        width=6.05,
+    )
+
+    failure_df = data["defense_failure_cases"]
+    rows = []
+    for _, row in failure_df.iterrows():
+        rows.append(
+            [
+                int(row.case_id),
+                f"{int(row.label)} {row.label_name}",
+                int(row.clean_pred),
+                int(row.pgd_pred),
+                int(row.jpeg_pred),
+                num(row.clean_conf, 3),
+                num(row.pgd_conf, 3),
+                num(row.jpeg_conf, 3),
+            ]
+        )
+    table(
+        doc,
+        "JPEG Q75 未恢复的典型失败案例",
+        ["Case", "True Label", "Clean", "PGD", "JPEG", "C Conf.", "P Conf.", "J Conf."],
+        rows,
+        [650, 2400, 750, 750, 750, 1000, 1000, 2060],
+        "本表专门展示失败案例。可以看到部分样本在 PGD 后以很高置信度错分，JPEG 后仍然维持错误预测。这说明输入防御只会破坏部分扰动，并不能保证所有样本恢复。",
+        font_size=7.2,
+    )
+    figure(
+        doc,
+        "fig_44_pgd_jpeg_failure_examples.png",
+        "PGD 攻击后 JPEG Q75 仍失败的样例",
+        "该图从左到右展示 Original、PGD、JPEG Q75。它补充了报告的失败案例分析：防御有效不等于总能恢复，尤其在类别相似、标志细节弱或攻击后置信度很高时，压缩仍可能无法把样本拉回正确类别。",
+        width=6.20,
+    )
+
+    adaptive = data["adaptive_jpeg"].iloc[0]
+    rows = [
+        ("Clean", pct(adaptive.clean_accuracy), "正常测试输入"),
+        ("Standard PGD before JPEG", pct(adaptive.standard_pgd_accuracy_before_jpeg), "不考虑防御的普通 PGD"),
+        ("Standard PGD + JPEG Q75", pct(adaptive.standard_pgd_accuracy_after_jpeg), "先攻击再压缩，非自适应威胁模型"),
+        ("Adaptive BPDA + JPEG Q75", pct(adaptive.adaptive_bpda_accuracy_after_jpeg), "攻击时把 JPEG 近似纳入优化"),
+    ]
+    table(
+        doc,
+        "JPEG 防御下普通 PGD 与自适应 BPDA 攻击对比",
+        ["场景", "Accuracy", "含义"],
+        rows,
+        [3000, 1600, 4760],
+        "BPDA 是 Backward Pass Differentiable Approximation，即前向传播保留不可导或难导的 JPEG 变换，反向传播用可导近似传梯度。该表用于检验输入预处理防御在攻击者知道防御存在时是否仍可靠。",
+        font_size=8.0,
+    )
+    figure(
+        doc,
+        "fig_45_adaptive_jpeg_bpda_accuracy.png",
+        "JPEG 防御在普通 PGD 与自适应攻击下的准确率",
+        f"图中可见普通 PGD+JPEG Q75 准确率为 {pct(adaptive.standard_pgd_accuracy_after_jpeg)}，自适应 BPDA+JPEG Q75 为 {pct(adaptive.adaptive_bpda_accuracy_after_jpeg)}。下降幅度不大，但说明防御结论依赖攻击假设，不能把 JPEG 解释成完备安全方案。",
+        width=5.95,
+    )
+    figure(
+        doc,
+        "fig_46_adaptive_jpeg_bpda_examples.png",
+        "自适应 BPDA 攻击使 JPEG 防御失效的样例",
+        "该图展示 clean、普通 PGD+JPEG 和 BPDA+JPEG 的对比。普通攻击下 JPEG 仍可恢复的部分样本，在自适应攻击下会再次错分，说明攻击者若知道防御流程，可以针对防御构造更有效扰动。",
+        width=6.20,
+    )
+
+    adv_train_df = data["adv_training_robust"]
+    attack_df = data["attack"]
+    clean_row = adv_train_df[adv_train_df.attack == "clean"].iloc[0]
+    base_clean = attack_df.iloc[0].clean_accuracy
+    rows = [["Clean", "-", pct(base_clean), pct(clean_row.accuracy), pct(clean_row.accuracy - base_clean)]]
+    for attack_name in ["fgsm", "pgd"]:
+        for eps in [0.03, 0.05]:
+            base = attack_df[(attack_df.attack == attack_name) & (np.isclose(attack_df.epsilon, eps))].iloc[0]
+            adv = adv_train_df[(adv_train_df.attack == attack_name) & (np.isclose(adv_train_df.epsilon, eps))].iloc[0]
+            rows.append([attack_name.upper(), num(eps, 2), pct(base.adversarial_accuracy), pct(adv.accuracy), pct(adv.accuracy - base.adversarial_accuracy)])
+    table(
+        doc,
+        "FGSM 对抗训练后的模型级防御效果",
+        ["Attack", "Eps", "Baseline Acc.", "Adv Train Acc.", "Gain"],
+        rows,
+        [1100, 800, 2200, 2300, 2960],
+        "本表比较同一批 3000 张测试样本上的 baseline ResNet18 与 FGSM 对抗训练模型。对抗训练从已有 best checkpoint 继续微调 4 个 epoch。结果显示 clean 准确率未明显下降，而 FGSM/PGD 鲁棒准确率均显著提升。",
+        font_size=8.0,
+    )
+    figure(
+        doc,
+        "fig_47_adv_training_loss_curve.png",
+        "对抗训练损失曲线",
+        "该图展示微调过程中 adversarial training loss 的下降。损失下降说明模型逐步适应了由 FGSM 生成的局部扰动样本。",
+        width=5.80,
+    )
+    figure(
+        doc,
+        "fig_48_adv_training_accuracy_curve.png",
+        "对抗训练准确率曲线",
+        "该图同时展示训练对抗准确率和验证 clean 准确率。验证 clean accuracy 保持高位，说明短轮微调没有明显破坏正常识别能力。",
+        width=5.80,
+    )
+    figure(
+        doc,
+        "fig_49_adv_training_robust_curve.png",
+        "对抗训练前后鲁棒准确率曲线",
+        "该图把 baseline 与 adversarial training 放在同一坐标系比较。对抗训练后 FGSM 和 PGD 曲线整体上移，说明模型级防御比单纯输入变换更直接地改善决策边界。",
+        width=5.95,
+    )
+    figure(
+        doc,
+        "fig_50_adv_training_eps003_bar.png",
+        "epsilon=0.03 下 baseline 与对抗训练模型对比",
+        "该柱状图适合答辩时快速展示模型级防御收益。PGD epsilon=0.03 从 baseline 的 60% 左右提升到 88.63%，说明训练阶段加入对抗样本能显著提升鲁棒性。",
+        width=5.95,
+    )
+    figure(
+        doc,
+        "fig_51_adv_training_robust_examples.png",
+        "对抗训练模型抵抗 PGD 的样例",
+        "该图展示对抗训练模型在 PGD epsilon=0.03 下仍能正确识别的样例。它补充了数值指标之外的可视化证据，说明防御不是只发生在平均统计上。",
+        width=6.05,
+    )
+
     h2(doc, "4.8 深度反思：成功、失败与原因")
     rows = [
         ("正常识别成功", "边界清晰、光照正常、类别特征明显", "ResNet 能稳定提取形状和颜色特征"),
@@ -952,7 +1141,8 @@ def part4(doc, data):
         ("攻击成功", "视觉变化小但预测改变", "梯度扰动沿损失增大方向移动样本"),
         ("随机噪声失败", "同等 epsilon 随机扰动几乎不降准确率", "随机方向大多不是模型敏感方向"),
         ("防御恢复", "JPEG/滤波削弱高频扰动", "输入变换使样本回到较稳定区域"),
-        ("防御失败", "强攻击或过强压缩导致细节丢失", "轻量输入防御有上限，自适应攻击可能绕过"),
+        ("防御失败", "强攻击或过强压缩导致细节丢失", "轻量输入防御有上限，失败案例和 BPDA 验证体现了边界"),
+        ("对抗训练成功", "模型级防御显著提升 FGSM/PGD 准确率", "训练时直接优化局部扰动邻域内的分类稳定性"),
     ]
     table(
         doc,
@@ -977,7 +1167,8 @@ def part5(doc):
         ("步骤 4", "展示防御恢复", "展示 fig_19 和 fig_30，说明输入预处理恢复效果"),
         ("步骤 5", "展示 Grad-CAM", "展示 fig_33，说明攻击前后模型关注区域如何变化"),
         ("步骤 6", "讲解运行代价", "展示 fig_40/fig_41，说明 PGD 更强但更慢，JPEG 防御开销较低"),
-        ("步骤 7", "讲解局限", "说明输入防御不是完备方案，后续可做对抗训练和自适应攻击"),
+        ("步骤 7", "讲解防御边界", "展示 fig_44/fig_45，说明失败案例和自适应攻击"),
+        ("步骤 8", "展示模型级防御", "展示 fig_50，说明对抗训练带来的鲁棒性提升"),
     ]
     table(
         doc,
@@ -999,6 +1190,9 @@ def part5(doc):
         "python -m src.benchmark_runtime --config configs/runtime_benchmark.yaml",
         "python -m src.evaluate_attacks --config configs/attack_fgsm_pgd_full_test.yaml",
         "python -m src.evaluate_input_defense --config configs/defense_input_preprocessing_full_test.yaml",
+        "python -m src.evaluate_per_class_failure --config configs/per_class_failure_analysis.yaml",
+        "python -m src.evaluate_adaptive_jpeg_attack --config configs/adaptive_jpeg_attack.yaml",
+        "python -m src.train_adversarial --config configs/defense_adversarial_training.yaml",
         "python scripts/build_teacher_format_report.py",
     ]:
         add_code_line(doc, cmd)
@@ -1025,6 +1219,11 @@ def part6(doc, data):
         & (data["jpeg_quality"].jpeg_quality == 75)
     ].iloc[0]
     pgd_runtime = data["runtime"][data["runtime"].operation == "pgd_generation"].iloc[0]
+    adaptive = data["adaptive_jpeg"].iloc[0]
+    adv_train_pgd003 = data["adv_training_robust"][
+        (data["adv_training_robust"].attack == "pgd")
+        & (np.isclose(data["adv_training_robust"].epsilon, 0.03))
+    ].iloc[0]
     rows = [
         ("基础识别", "ResNet18 clean accuracy", pct(data["baseline"]["accuracy"]), "基础模型有效"),
         ("攻击有效性", "PGD eps=0.03 adversarial accuracy", pct(pgd003.adversarial_accuracy), "小扰动显著破坏识别"),
@@ -1034,6 +1233,8 @@ def part6(doc, data):
         ("JPEG 消融", "PGD eps=0.03 JPEG Q75 defended accuracy", pct(q75_pgd003.accuracy_after_jpeg), "主防御参数有独立消融支撑"),
         ("全测试集验证", "PGD eps=0.03 on 12630 images", pct(full_pgd003.adversarial_accuracy), "抽样结论在完整测试集成立"),
         ("运行效率", "PGD generation ms/image", num(pgd_runtime.mean_ms_per_image, 3), "强攻击计算代价最高"),
+        ("自适应攻击", "BPDA + JPEG Q75 accuracy", pct(adaptive.adaptive_bpda_accuracy_after_jpeg), "输入预处理防御存在威胁模型边界"),
+        ("模型级防御", "Adv training PGD eps=0.03 accuracy", pct(adv_train_pgd003.accuracy), "对抗训练显著提升鲁棒性"),
     ]
     table(
         doc,
@@ -1046,7 +1247,7 @@ def part6(doc, data):
     add_callout(
         doc,
         "项目心得",
-        "本项目最大的收获是：深度学习模型的高准确率不等于高安全性。对抗攻击展示了模型决策边界的脆弱性，随机噪声对照证明了梯度方向的重要性，防御参数扫描和 JPEG quality 消融说明鲁棒性提升往往伴随正常性能损失。Grad-CAM 则从关注区域角度补充了模型内部证据。后续如果继续推进，应重点补充对抗训练、自适应攻击和交互式 Demo。",
+        "本项目最大的收获是：深度学习模型的高准确率不等于高安全性。对抗攻击展示了模型决策边界的脆弱性，随机噪声对照证明了梯度方向的重要性，防御参数扫描和 JPEG quality 消融说明鲁棒性提升往往伴随正常性能损失。新增的失败案例和 BPDA 自适应攻击说明输入预处理不是完备安全方案；FGSM 对抗训练则证明从模型参数层面提升鲁棒性更有效。Grad-CAM 从关注区域角度补充了模型内部证据。后续如果继续推进，应重点补充 PGD/TRADES 训练、跨模型消融和交互式 Demo。",
     )
 
     h2(doc, "参考文献")

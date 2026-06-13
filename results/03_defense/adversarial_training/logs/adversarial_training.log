@@ -1,0 +1,6 @@
+               model attack  epsilon  accuracy  mean_confidence  total_images  training_seconds  best_epoch  best_val_accuracy
+adversarial_training  clean     0.00  0.984667         0.982938          3000        285.684563           4                1.0
+adversarial_training   fgsm     0.03  0.880000         0.933804          3000        285.684563           4                1.0
+adversarial_training   fgsm     0.05  0.778333         0.896705          3000        285.684563           4                1.0
+adversarial_training    pgd     0.03  0.886333         0.944204          3000        285.684563           4                1.0
+adversarial_training    pgd     0.05  0.860333         0.936629          3000        285.684563           4                1.0

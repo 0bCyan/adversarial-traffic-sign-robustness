@@ -1,0 +1,18 @@
+{
+  "metrics": [
+    {
+      "attack": "pgd_bpda_jpeg",
+      "epsilon": 0.03,
+      "pgd_alpha": 0.005,
+      "pgd_steps": 7,
+      "jpeg_quality": 75,
+      "total_images": 3000,
+      "clean_accuracy": 0.9793333333333333,
+      "standard_pgd_accuracy_before_jpeg": 0.5996666666666667,
+      "standard_pgd_accuracy_after_jpeg": 0.7893333333333333,
+      "adaptive_bpda_accuracy_after_jpeg": 0.7803333333333333,
+      "standard_pgd_success_rate_before_jpeg_on_clean_correct": 0.3876786929884275,
+      "adaptive_bpda_success_rate_after_jpeg_on_clean_correct": 0.20319945541184478
+    }
+  ]
+}

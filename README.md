@@ -47,6 +47,8 @@ GTSRB 数据集
 │   ├── 02_attack/
 │   ├── 03_defense/
 │   ├── 04_explainability/
+│   ├── 04_extended_analysis/
+│   ├── 06_runtime/
 │   └── 05_demo/
 ├── src/                      # 源代码
 │   ├── data/
@@ -64,8 +66,8 @@ GTSRB 数据集
 2. 基础交通标志识别模型训练。
 3. FGSM 与 PGD 对抗攻击。
 4. 对抗训练和输入预处理防御。
-5. Grad-CAM 或置信度变化可视化。
-6. 交互式演示系统。
+5. Grad-CAM、类别鲁棒性、失败案例和运行效率可视化。
+6. 自适应攻击验证与交互式演示材料整理。
 
 详见 [实验与实现计划](docs/experiment_implementation_plan.md)。
 
@@ -77,12 +79,17 @@ GTSRB 数据集
 - ResNet18 基础识别训练。
 - FGSM / PGD 对抗攻击评估。
 - Gaussian Blur / Median Filter / JPEG Compression 输入预处理防御。
-
-暂未纳入正式结果：
-
-- 对抗训练防御，代码和配置已准备，但完整实验尚未跑完。
 - Grad-CAM 可解释性分析。
-- Streamlit Demo。
+- JPEG quality 参数消融、完整测试集关键配置验证、运行效率统计。
+- 按类别鲁棒性统计和 JPEG 防御失败案例分析。
+- JPEG 防御下 BPDA 自适应攻击验证。
+- FGSM 对抗训练模型级防御实验。
+
+仍作为后续扩展：
+
+- Streamlit/Gradio 交互式 Demo 录屏。
+- PGD adversarial training、TRADES 等更强鲁棒训练。
+- SimpleCNN / ResNet stem 等跨模型结构消融。
 
 当前结果汇总见 [reports/result_summary.md](reports/result_summary.md)。  
 报告草稿见 [reports/draft_report.md](reports/draft_report.md)。  
@@ -124,6 +131,16 @@ python -m src.evaluate_input_defense --config configs/defense_input_preprocessin
 
 ```bash
 python -m src.train_adversarial --config configs/defense_adversarial_training.yaml
+```
+
+运行补充鲁棒性验证：
+
+```bash
+python -m src.visualization.gradcam_analysis --config configs/explainability_gradcam.yaml
+python -m src.evaluate_jpeg_ablation --config configs/defense_jpeg_ablation.yaml
+python -m src.evaluate_per_class_failure --config configs/per_class_failure_analysis.yaml
+python -m src.evaluate_adaptive_jpeg_attack --config configs/adaptive_jpeg_attack.yaml
+python -m src.benchmark_runtime --config configs/runtime_benchmark.yaml
 ```
 
 输出位置：

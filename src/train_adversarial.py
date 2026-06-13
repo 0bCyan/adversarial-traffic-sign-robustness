@@ -497,10 +497,10 @@ def copy_report_assets(dirs: dict[str, Path], report_figure_dir: Path, report_ta
     report_figure_dir.mkdir(parents=True, exist_ok=True)
     report_table_dir.mkdir(parents=True, exist_ok=True)
     figure_map = {
-        "adversarial_training_loss_curve.png": "fig_20_adv_training_loss_curve.png",
-        "adversarial_training_accuracy_curve.png": "fig_21_adv_training_accuracy_curve.png",
-        "adversarial_training_robust_accuracy_curve.png": "fig_22_adv_training_robust_curve.png",
-        "adversarial_training_eps003_bar.png": "fig_23_adv_training_eps003_bar.png",
+        "adversarial_training_loss_curve.png": "fig_47_adv_training_loss_curve.png",
+        "adversarial_training_accuracy_curve.png": "fig_48_adv_training_accuracy_curve.png",
+        "adversarial_training_robust_accuracy_curve.png": "fig_49_adv_training_robust_curve.png",
+        "adversarial_training_eps003_bar.png": "fig_50_adv_training_eps003_bar.png",
     }
     for src_name, dst_name in figure_map.items():
         src = dirs["figures"] / src_name
@@ -509,11 +509,11 @@ def copy_report_assets(dirs: dict[str, Path], report_figure_dir: Path, report_ta
 
     sample = dirs["samples"] / "adversarial_training_pgd_eps003_robust_examples.png"
     if sample.exists():
-        shutil.copy2(sample, report_figure_dir / "fig_24_adv_training_robust_examples.png")
+        shutil.copy2(sample, report_figure_dir / "fig_51_adv_training_robust_examples.png")
 
     for src_name, dst_name in {
-        "train_log.csv": "table_08_adv_training_train_log.csv",
-        "robust_metrics.csv": "table_09_adv_training_robust_metrics.csv",
+        "train_log.csv": "table_19_adv_training_train_log.csv",
+        "robust_metrics.csv": "table_20_adv_training_robust_metrics.csv",
     }.items():
         src = dirs["metrics"] / src_name
         if src.exists():
@@ -636,4 +636,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

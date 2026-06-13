@@ -1,6 +1,6 @@
 # 当前项目状态
 
-更新时间：2026-06-13
+更新时间：2026-06-14
 
 ## 已完成
 
@@ -9,6 +9,9 @@
 - ResNet18 基础识别训练脚本。
 - FGSM / PGD 对抗攻击评估脚本。
 - 输入预处理防御评估脚本。
+- Grad-CAM、JPEG quality 消融、运行效率统计。
+- 类别鲁棒性、失败案例、自适应 BPDA 攻击分析。
+- FGSM 对抗训练模型级防御实验。
 - 报告图片与表格导出。
 - 中文实验报告草稿所需的核心数据。
 
@@ -18,26 +21,25 @@
 2. ResNet18 基础交通标志识别。
 3. FGSM / PGD 对抗扰动攻击。
 4. Gaussian Blur / Median Filter / JPEG Compression 输入预处理防御。
+5. Grad-CAM 可解释性、JPEG 参数消融、全测试集关键验证和运行效率。
+6. 类别鲁棒性、JPEG 防御失败案例、自适应攻击和 FGSM 对抗训练。
 
 ## 暂不写入正式结论的实验
 
-对抗训练防御代码已创建，但当前没有完整跑完并验证的结果。因此：
-
-- 可以在报告“改进方向”中提到。
-- 不建议在结果章节写具体指标。
-- 不建议在 PPT 中宣称已经完成。
+- Streamlit/Gradio 交互式 Demo 录屏。
+- PGD adversarial training、TRADES 等更强模型级防御。
+- SimpleCNN / ResNet stem 等跨模型结构消融。
 
 ## 下一步建议
 
 优先完成：
 
-1. 根据 `reports/draft_report.md` 整理正式 Word/PDF 报告。
-2. 根据 `reports/figure_table_index.md` 制作 PPT。
-3. 根据 `reports/result_summary.md` 填写结果表。
+1. 使用 `reports/word/教师要求版-基于ResNet交通标志识别的对抗扰动攻击与输入防御实验报告.docx` 作为主报告。
+2. 根据 `reports/figure_table_index.md` 和 `reports/pr6_additional_results_index.md` 制作 PPT。
+3. 若老师要求演示，录制离线 Demo：clean 识别 -> 攻击 -> 防御 -> 失败案例 -> 对抗训练对比。
 
 有余力再补：
 
-1. 对抗训练完整实验。
-2. Grad-CAM 可解释性分析。
+1. PGD/TRADES 对抗训练。
+2. 跨模型结构消融。
 3. Streamlit Demo。
-

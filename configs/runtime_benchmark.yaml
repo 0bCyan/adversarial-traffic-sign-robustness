@@ -1,0 +1,28 @@
+experiment_name: 06_runtime_benchmark
+seed: 42
+
+data:
+  dataset: GTSRB
+  root: data/raw
+  image_size: 64
+  batch_size: 128
+  num_workers: 4
+  selected_indices: results/02_attack/fgsm_pgd/metrics/selected_eval_indices.csv
+  max_eval_samples: 1024
+  download: false
+
+model:
+  checkpoint: results/01_baseline/resnet18/checkpoints/best_model.pth
+
+benchmark:
+  warmup_batches: 2
+  max_batches: 12
+  epsilon: 0.03
+  pgd_alpha: 0.005
+  pgd_steps: 7
+  jpeg_quality: 75
+
+outputs:
+  result_dir: results/06_runtime
+  report_figure_dir: reports/figures
+  report_table_dir: reports/tables

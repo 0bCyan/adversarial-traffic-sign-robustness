@@ -24,7 +24,8 @@ from build_deep_word_report import (
 )
 
 
-OUT_DIR = Path(__file__).resolve().parents[1] / "reports" / "word"
+ROOT_DIR = Path(__file__).resolve().parents[1]
+OUT_DIR = ROOT_DIR / "reports" / "word"
 OUT_PATH = OUT_DIR / "教师要求版-基于ResNet交通标志识别的对抗扰动攻击与输入防御实验报告.docx"
 
 TABLE_NO = 1
@@ -77,6 +78,11 @@ def load_data():
         "pgd_steps": pd.read_csv(TABLE_DIR / "table_10_pgd_step_ablation.csv"),
         "defense_sweep": pd.read_csv(TABLE_DIR / "table_11_defense_parameter_sweep.csv"),
         "margin_shift": pd.read_csv(TABLE_DIR / "table_12_margin_shift_metrics.csv"),
+        "gradcam": pd.read_csv(TABLE_DIR / "table_13_gradcam_cases.csv"),
+        "jpeg_quality": pd.read_csv(TABLE_DIR / "table_14_jpeg_quality_metrics.csv"),
+        "runtime": pd.read_csv(TABLE_DIR / "table_15_runtime_summary.csv"),
+        "full_attack": pd.read_csv(ROOT_DIR / "results" / "02_attack" / "fgsm_pgd_full_test" / "metrics" / "attack_metrics.csv"),
+        "full_defense": pd.read_csv(ROOT_DIR / "results" / "03_defense" / "input_preprocessing_full_test" / "metrics" / "input_defense_metrics.csv"),
     }
 
 
@@ -762,6 +768,183 @@ def part4(doc, data):
         width=6.05,
     )
 
+    h2(doc, "4.7.2 JPEG Quality 消融实验：防御强度与正常识别代价")
+    jpeg_df = data["jpeg_quality"]
+    rows = []
+    for attack_name, eps in [("clean", 0.0), ("fgsm", 0.03), ("pgd", 0.03), ("fgsm", 0.05), ("pgd", 0.05)]:
+        subset = jpeg_df[(jpeg_df.attack == attack_name) & (np.isclose(jpeg_df.epsilon, eps))]
+        for _, row in subset.sort_values("jpeg_quality").iterrows():
+            rows.append(
+                [
+                    attack_name.upper(),
+                    num(eps, 2),
+                    f"Q{int(row.jpeg_quality)}",
+                    pct(row.accuracy_before_jpeg),
+                    pct(row.accuracy_after_jpeg),
+                    pct(row.recovery_rate_on_successful_attacks),
+                    num(row.mean_psnr_vs_attack, 2),
+                ]
+            )
+    table(
+        doc,
+        "JPEG Quality 防御消融结果",
+        ["Attack", "Eps", "Quality", "Before", "After", "Recovery", "PSNR"],
+        rows,
+        [900, 800, 1050, 1350, 1350, 1600, 2310],
+        "本表单独扫描 JPEG quality=50、75、90。Quality 越低，压缩越强，高频扰动被破坏得更多，但正常图像细节也更容易损失。clean 行用于观察正常识别代价；FGSM/PGD 行用于观察鲁棒恢复。结果显示 Q50 鲁棒恢复最强，Q75 在 clean accuracy 与 defended accuracy 之间更均衡。",
+        font_size=7.6,
+    )
+    figure(
+        doc,
+        "fig_34_fgsm_jpeg_quality_curve.png",
+        "FGSM 下 JPEG Quality 对防御效果的影响",
+        "该图展示 FGSM epsilon=0.03 与 0.05 下，不同 JPEG quality 的防御后准确率。Q50 曲线最高，说明强压缩对 FGSM 扰动破坏更明显；但这并不意味着 Q50 一定最适合部署，还需要结合 clean accuracy 代价判断。",
+        width=5.95,
+    )
+    figure(
+        doc,
+        "fig_35_pgd_jpeg_quality_curve.png",
+        "PGD 下 JPEG Quality 对防御效果的影响",
+        "该图展示 PGD 攻击下的 JPEG quality 消融。PGD 比 FGSM 更强，但 Q50/Q75 仍能显著高于 before JPEG，说明 JPEG 压缩确实破坏了部分对抗扰动结构。Q90 保留细节更多，clean 损失小，但鲁棒恢复也较弱。",
+        width=5.95,
+    )
+    figure(
+        doc,
+        "fig_36_jpeg_quality_eps003_bar.png",
+        "epsilon=0.03 下 JPEG Quality 横向对比",
+        "该柱状图把 FGSM 与 PGD 在 epsilon=0.03 下的 Q50/Q75/Q90 放在一起比较。它清楚展示 Q50 防御准确率最高、Q75 次之、Q90 最低，说明防御强度与压缩强度高度相关。",
+        width=5.95,
+    )
+    figure(
+        doc,
+        "fig_37_jpeg_clean_accuracy_cost.png",
+        "JPEG Quality 对正常样本准确率的影响",
+        "该图专门展示 clean 输入经过 JPEG 后的准确率。Q90 最接近原始 clean accuracy，Q50 损失最大。将本图与防御准确率曲线一起看，可以说明防御不是越强越好，而是需要在正常识别与鲁棒恢复之间取折中。",
+        width=5.75,
+    )
+    figure(
+        doc,
+        "fig_38_fgsm_jpeg_quality_examples.png",
+        "FGSM 攻击下 JPEG Quality 防御案例",
+        "该图按 Clean、Attack、JPEG Q50、Q75、Q90 展示同一批样本。它能直观看到：强压缩会改变图像纹理细节，但也更可能把模型预测从攻击错误类别拉回正确类别。该图适合答辩时解释参数消融不是只看数字，也有可视化证据。",
+        width=6.20,
+    )
+    figure(
+        doc,
+        "fig_39_pgd_jpeg_quality_examples.png",
+        "PGD 攻击下 JPEG Quality 防御案例",
+        "该图展示更强 PGD 攻击下不同 JPEG quality 的恢复样例。PGD 扰动更贴近模型局部最坏方向，因此恢复更困难；若防御后仍能恢复，说明输入压缩确实改变了模型敏感的局部高频结构。",
+        width=6.20,
+    )
+
+    h2(doc, "4.7.3 Grad-CAM 可解释性分析：攻击如何改变模型关注区域")
+    gradcam_df = data["gradcam"]
+    rows = []
+    for _, row in gradcam_df.iterrows():
+        rows.append(
+            [
+                int(row.case_id),
+                f"{int(row.label)} {row.label_name}",
+                int(row.clean_pred),
+                int(row.adv_pred),
+                int(row.def_pred),
+                num(row.clean_conf, 3),
+                num(row.adv_conf, 3),
+                num(row.def_conf, 3),
+            ]
+        )
+    table(
+        doc,
+        "Grad-CAM 案例预测记录",
+        ["Case", "True Label", "Clean", "Attack", "Defense", "C Conf.", "A Conf.", "D Conf."],
+        rows,
+        [700, 2500, 800, 850, 900, 1100, 1100, 1410],
+        "本表记录 Grad-CAM 图中每个案例的预测变化。6 个案例都满足 clean 识别正确、PGD 攻击后预测错误、JPEG 防御后恢复正确。Conf. 是模型对当前预测类别的置信度，用于说明攻击并非只造成轻微不确定，而是能让模型较高置信地转向错误类别。",
+        font_size=7.5,
+    )
+    figure(
+        doc,
+        "fig_33_gradcam_clean_attack_defense.png",
+        "Clean、Attack、Defense 三阶段 Grad-CAM 对比",
+        "Grad-CAM 用最后一层卷积特征的梯度权重生成热力图，红色区域表示模型更依赖的图像区域。图中 Attack 列的关注区域相比 Clean 列出现扩散、偏移或关注错误纹理；Defense 列在 JPEG 处理后预测恢复，热力图也更接近标志主体区域。该图补充了纯指标无法说明的模型内部证据。",
+        width=5.95,
+    )
+
+    h2(doc, "4.7.4 全测试集验证与运行效率评估")
+    full_attack_df = data["full_attack"]
+    rows = []
+    for _, row in full_attack_df.iterrows():
+        rows.append(
+            [
+                row.attack.upper(),
+                num(row.epsilon, 2),
+                int(row.total_images),
+                pct(row.clean_accuracy),
+                pct(row.adversarial_accuracy),
+                pct(row.attack_success_rate),
+                num(row.mean_confidence_drop, 4),
+            ]
+        )
+    table(
+        doc,
+        "全测试集攻击验证结果",
+        ["Attack", "Eps", "Images", "Clean Acc.", "Adv. Acc.", "Success", "Conf. Drop"],
+        rows,
+        [900, 800, 1100, 1500, 1500, 1500, 2060],
+        "主实验使用固定 3000 张分层抽样测试图以控制运行时间。该表进一步在完整 GTSRB 测试集 12630 张图上验证 epsilon=0.03 的关键结论。FGSM 与 PGD 的全测试集结果和抽样趋势一致，说明前文结论不是抽样偶然。",
+        font_size=8.0,
+    )
+    full_def_df = data["full_defense"]
+    rows = []
+    for _, row in full_def_df.iterrows():
+        rows.append(
+            [
+                row.attack.upper(),
+                num(row.epsilon, 2),
+                row.defense,
+                int(row.total_images),
+                pct(row.adversarial_accuracy_before_defense),
+                pct(row.defended_accuracy),
+                pct(row.recovery_rate_on_successful_attacks),
+            ]
+        )
+    table(
+        doc,
+        "全测试集 JPEG Q75 防御验证结果",
+        ["Attack", "Eps", "Defense", "Images", "Before", "After", "Recovery"],
+        rows,
+        [900, 800, 2100, 1100, 1350, 1350, 1760],
+        "本表在完整测试集上只验证主防御配置 JPEG Q75。FGSM epsilon=0.03 从 66.67% 恢复到 78.35%，PGD epsilon=0.03 从 59.25% 恢复到 78.04%。这说明 JPEG 防御在完整测试集上仍能稳定恢复一部分对抗样本。",
+        font_size=8.0,
+    )
+    runtime_df = data["runtime"].sort_values("mean_ms_per_image")
+    rows = []
+    for _, row in runtime_df.iterrows():
+        rows.append([row.operation, int(row.batches), num(row.mean_ms_per_image, 3), num(row.mean_images_per_second, 1)])
+    table(
+        doc,
+        "推理、攻击与防御运行效率统计",
+        ["Operation", "Batches", "ms/image", "Images/s"],
+        rows,
+        [3300, 1200, 1800, 3060],
+        "本表说明不同模块的计算代价。clean inference 与 JPEG defense 都较快；FGSM 需要一次反向传播，耗时增加；PGD 需要多步反向传播，因此最慢。该结果可用于解释为什么 PGD 更强但成本更高，也说明 JPEG 输入防御适合做轻量展示模块。",
+        font_size=8.0,
+    )
+    figure(
+        doc,
+        "fig_40_runtime_ms_per_image.png",
+        "不同操作的单张图片平均耗时",
+        "该图用横向柱状图展示 ms/image。PGD generation 明显高于 FGSM generation 和 clean inference，原因是 PGD 要进行多步梯度更新。JPEG defense plus inference 的耗时较低，说明输入预处理防御不会带来很大的演示负担。",
+        width=5.95,
+    )
+    figure(
+        doc,
+        "fig_41_runtime_images_per_second.png",
+        "不同操作的处理吞吐率",
+        "吞吐率与单图耗时互为补充。clean inference 和 JPEG defense 的 images/s 较高，而 PGD generation 最低。该图适合在 Demo 部分说明：实时演示可以优先展示 clean、FGSM 和 JPEG 防御，PGD 可作为预生成或短样本演示。",
+        width=5.95,
+    )
+
     h2(doc, "4.8 深度反思：成功、失败与原因")
     rows = [
         ("正常识别成功", "边界清晰、光照正常、类别特征明显", "ResNet 能稳定提取形状和颜色特征"),
@@ -792,7 +975,9 @@ def part5(doc):
         ("步骤 2", "展示攻击生成", "展示 fig_21/fig_22，强调真实对抗图和放大 Delta 的区别"),
         ("步骤 3", "展示随机噪声对照", "展示 fig_27/fig_32，证明不是普通噪声"),
         ("步骤 4", "展示防御恢复", "展示 fig_19 和 fig_30，说明输入预处理恢复效果"),
-        ("步骤 5", "讲解局限", "说明输入防御不是完备方案，后续可做对抗训练和自适应攻击"),
+        ("步骤 5", "展示 Grad-CAM", "展示 fig_33，说明攻击前后模型关注区域如何变化"),
+        ("步骤 6", "讲解运行代价", "展示 fig_40/fig_41，说明 PGD 更强但更慢，JPEG 防御开销较低"),
+        ("步骤 7", "讲解局限", "说明输入防御不是完备方案，后续可做对抗训练和自适应攻击"),
     ]
     table(
         doc,
@@ -809,6 +994,11 @@ def part5(doc):
         "python -m src.analyze_perturbations",
         "python -m src.evaluate_input_defense --config configs/defense_input_preprocessing.yaml",
         "python -m src.extended_experiments",
+        "python -m src.visualization.gradcam_analysis --config configs/explainability_gradcam.yaml",
+        "python -m src.evaluate_jpeg_ablation --config configs/defense_jpeg_ablation.yaml",
+        "python -m src.benchmark_runtime --config configs/runtime_benchmark.yaml",
+        "python -m src.evaluate_attacks --config configs/attack_fgsm_pgd_full_test.yaml",
+        "python -m src.evaluate_input_defense --config configs/defense_input_preprocessing_full_test.yaml",
         "python scripts/build_teacher_format_report.py",
     ]:
         add_code_line(doc, cmd)
@@ -828,12 +1018,22 @@ def part6(doc, data):
     pgd003 = attack_df[(attack_df.attack == "pgd") & (np.isclose(attack_df.epsilon, 0.03))].iloc[0]
     random003 = random_df[np.isclose(random_df.epsilon, 0.03)].iloc[0]
     best_def = sweep_df.sort_values("pgd_defended_accuracy", ascending=False).iloc[0]
+    full_pgd003 = data["full_attack"][(data["full_attack"].attack == "pgd") & (np.isclose(data["full_attack"].epsilon, 0.03))].iloc[0]
+    q75_pgd003 = data["jpeg_quality"][
+        (data["jpeg_quality"].attack == "pgd")
+        & (np.isclose(data["jpeg_quality"].epsilon, 0.03))
+        & (data["jpeg_quality"].jpeg_quality == 75)
+    ].iloc[0]
+    pgd_runtime = data["runtime"][data["runtime"].operation == "pgd_generation"].iloc[0]
     rows = [
         ("基础识别", "ResNet18 clean accuracy", pct(data["baseline"]["accuracy"]), "基础模型有效"),
         ("攻击有效性", "PGD eps=0.03 adversarial accuracy", pct(pgd003.adversarial_accuracy), "小扰动显著破坏识别"),
         ("随机对照", "Random eps=0.03 accuracy", pct(random003.perturbed_accuracy), "证明不是普通噪声"),
         ("PGD 消融", "20 steps adversarial accuracy", pct(step_df.sort_values("pgd_steps").iloc[-1].adversarial_accuracy), "迭代越充分攻击越强"),
         ("防御扫描", f"Best variant {best_def.variant}", pct(best_def.pgd_defended_accuracy), "存在 clean-robust trade-off"),
+        ("JPEG 消融", "PGD eps=0.03 JPEG Q75 defended accuracy", pct(q75_pgd003.accuracy_after_jpeg), "主防御参数有独立消融支撑"),
+        ("全测试集验证", "PGD eps=0.03 on 12630 images", pct(full_pgd003.adversarial_accuracy), "抽样结论在完整测试集成立"),
+        ("运行效率", "PGD generation ms/image", num(pgd_runtime.mean_ms_per_image, 3), "强攻击计算代价最高"),
     ]
     table(
         doc,
@@ -846,7 +1046,7 @@ def part6(doc, data):
     add_callout(
         doc,
         "项目心得",
-        "本项目最大的收获是：深度学习模型的高准确率不等于高安全性。对抗攻击展示了模型决策边界的脆弱性，随机噪声对照证明了梯度方向的重要性，防御参数扫描则说明鲁棒性提升往往伴随正常性能损失。后续如果继续推进，应重点补充对抗训练、自适应攻击、Grad-CAM 可解释性和交互式 Demo。",
+        "本项目最大的收获是：深度学习模型的高准确率不等于高安全性。对抗攻击展示了模型决策边界的脆弱性，随机噪声对照证明了梯度方向的重要性，防御参数扫描和 JPEG quality 消融说明鲁棒性提升往往伴随正常性能损失。Grad-CAM 则从关注区域角度补充了模型内部证据。后续如果继续推进，应重点补充对抗训练、自适应攻击和交互式 Demo。",
     )
 
     h2(doc, "参考文献")

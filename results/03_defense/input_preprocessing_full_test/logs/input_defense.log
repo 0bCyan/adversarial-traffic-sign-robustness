@@ -1,0 +1,3 @@
+attack  epsilon          defense  clean_accuracy  adversarial_accuracy_before_defense  defended_accuracy  recovery_rate_on_successful_attacks  mean_defended_confidence  total_images
+  fgsm     0.03 jpeg_compression        0.978147                             0.666667           0.783531                             0.377478                  0.916504         12630
+   pgd     0.03 jpeg_compression        0.978147                             0.592478           0.780443                             0.487580                  0.937845         12630

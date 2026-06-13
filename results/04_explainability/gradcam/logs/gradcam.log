@@ -1,0 +1,7 @@
+ case_id  label        label_name  clean_pred  adv_pred  def_pred  clean_conf  adv_conf  def_conf  recovered_by_defense
+       1     10 No passing trucks          10         7        10    0.999989  0.615780  0.998399                  True
+       2     16 Trucks prohibited          16         9        16    0.999906  0.941517  0.987503                  True
+       3     28 Children crossing          28        24        28    0.999905  0.536538  0.740116                  True
+       4     17          No entry          17         9        17    0.952649  0.692973  0.655469                  True
+       5     10 No passing trucks          10         9        10    0.999988  0.768615  0.948549                  True
+       6     38        Keep right          38        40        38    0.999970  0.505345  0.951284                  True

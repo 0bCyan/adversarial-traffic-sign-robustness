@@ -1,0 +1,26 @@
+{
+  "metrics": [
+    {
+      "attack": "fgsm",
+      "epsilon": 0.03,
+      "defense": "jpeg_compression",
+      "clean_accuracy": 0.978147268408551,
+      "adversarial_accuracy_before_defense": 0.6666666666666666,
+      "defended_accuracy": 0.7835312747426761,
+      "recovery_rate_on_successful_attacks": 0.37747839349262835,
+      "mean_defended_confidence": 0.9165041577634316,
+      "total_images": 12630
+    },
+    {
+      "attack": "pgd",
+      "epsilon": 0.03,
+      "defense": "jpeg_compression",
+      "clean_accuracy": 0.978147268408551,
+      "adversarial_accuracy_before_defense": 0.5924782264449723,
+      "defended_accuracy": 0.780443388756928,
+      "recovery_rate_on_successful_attacks": 0.487579552453295,
+      "mean_defended_confidence": 0.9378445325866165,
+      "total_images": 12630
+    }
+  ]
+}

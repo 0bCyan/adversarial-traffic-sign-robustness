@@ -1,0 +1,7 @@
+              operation  batches  mean_batch_seconds  std_batch_seconds  mean_ms_per_image  std_ms_per_image  mean_images_per_second
+       jpeg_defense_pgd       12            0.026694           0.001320           0.208546          0.010314             4806.786487
+      jpeg_defense_fgsm       12            0.027090           0.002022           0.211639          0.015798             4747.477488
+        clean_inference       12            0.036730           0.000308           0.286952          0.002406             3485.148830
+jpeg_pgd_plus_inference       12            0.063872           0.001606           0.498999          0.012545             2005.269774
+        fgsm_generation       12            0.120088           0.000602           0.938190          0.004705             1065.908729
+         pgd_generation       12            0.844976           0.004262           6.601377          0.033300              151.487413

@@ -1,0 +1,58 @@
+{
+  "metrics": [
+    {
+      "operation": "jpeg_defense_pgd",
+      "batches": 12,
+      "mean_batch_seconds": 0.02669394999990497,
+      "std_batch_seconds": 0.0013202262644977018,
+      "mean_ms_per_image": 0.20854648437425757,
+      "std_ms_per_image": 0.010314267691388294,
+      "mean_images_per_second": 4806.786486995639
+    },
+    {
+      "operation": "jpeg_defense_fgsm",
+      "batches": 12,
+      "mean_batch_seconds": 0.027089833333017548,
+      "std_batch_seconds": 0.0020221176712358537,
+      "mean_ms_per_image": 0.2116393229141996,
+      "std_ms_per_image": 0.015797794306530107,
+      "mean_images_per_second": 4747.477488395828
+    },
+    {
+      "operation": "clean_inference",
+      "batches": 12,
+      "mean_batch_seconds": 0.03672985000002882,
+      "std_batch_seconds": 0.0003080159153845679,
+      "mean_ms_per_image": 0.28695195312522515,
+      "std_ms_per_image": 0.0024063743389419368,
+      "mean_images_per_second": 3485.148829935373
+    },
+    {
+      "operation": "jpeg_pgd_plus_inference",
+      "batches": 12,
+      "mean_batch_seconds": 0.06387191666681247,
+      "std_batch_seconds": 0.0016058127462665014,
+      "mean_ms_per_image": 0.4989993489594724,
+      "std_ms_per_image": 0.012545412080207041,
+      "mean_images_per_second": 2005.2697741736204
+    },
+    {
+      "operation": "fgsm_generation",
+      "batches": 12,
+      "mean_batch_seconds": 0.12008834166636007,
+      "std_batch_seconds": 0.0006021995081636954,
+      "mean_ms_per_image": 0.938190169268438,
+      "std_ms_per_image": 0.00470468365752887,
+      "mean_images_per_second": 1065.908729356416
+    },
+    {
+      "operation": "pgd_generation",
+      "batches": 12,
+      "mean_batch_seconds": 0.8449762500002483,
+      "std_batch_seconds": 0.004262357528363511,
+      "mean_ms_per_image": 6.60137695312694,
+      "std_ms_per_image": 0.033299668190339936,
+      "mean_images_per_second": 151.48741344724016
+    }
+  ]
+}

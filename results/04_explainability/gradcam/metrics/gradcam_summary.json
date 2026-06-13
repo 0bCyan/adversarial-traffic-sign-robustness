@@ -1,0 +1,76 @@
+{
+  "cases": [
+    {
+      "case_id": 1,
+      "label": 10,
+      "label_name": "No passing trucks",
+      "clean_pred": 10,
+      "adv_pred": 7,
+      "def_pred": 10,
+      "clean_conf": 0.9999885559082031,
+      "adv_conf": 0.6157796382904053,
+      "def_conf": 0.9983991980552673,
+      "recovered_by_defense": true
+    },
+    {
+      "case_id": 2,
+      "label": 16,
+      "label_name": "Trucks prohibited",
+      "clean_pred": 16,
+      "adv_pred": 9,
+      "def_pred": 16,
+      "clean_conf": 0.999906063079834,
+      "adv_conf": 0.9415172338485718,
+      "def_conf": 0.9875032305717468,
+      "recovered_by_defense": true
+    },
+    {
+      "case_id": 3,
+      "label": 28,
+      "label_name": "Children crossing",
+      "clean_pred": 28,
+      "adv_pred": 24,
+      "def_pred": 28,
+      "clean_conf": 0.9999053478240967,
+      "adv_conf": 0.5365382432937622,
+      "def_conf": 0.7401161789894104,
+      "recovered_by_defense": true
+    },
+    {
+      "case_id": 4,
+      "label": 17,
+      "label_name": "No entry",
+      "clean_pred": 17,
+      "adv_pred": 9,
+      "def_pred": 17,
+      "clean_conf": 0.9526489973068237,
+      "adv_conf": 0.6929728388786316,
+      "def_conf": 0.6554694771766663,
+      "recovered_by_defense": true
+    },
+    {
+      "case_id": 5,
+      "label": 10,
+      "label_name": "No passing trucks",
+      "clean_pred": 10,
+      "adv_pred": 9,
+      "def_pred": 10,
+      "clean_conf": 0.9999877214431763,
+      "adv_conf": 0.7686147689819336,
+      "def_conf": 0.9485486149787903,
+      "recovered_by_defense": true
+    },
+    {
+      "case_id": 6,
+      "label": 38,
+      "label_name": "Keep right",
+      "clean_pred": 38,
+      "adv_pred": 40,
+      "def_pred": 38,
+      "clean_conf": 0.9999698400497437,
+      "adv_conf": 0.5053445100784302,
+      "def_conf": 0.9512841105461121,
+      "recovered_by_defense": true
+    }
+  ]
+}

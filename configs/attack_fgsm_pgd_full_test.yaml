@@ -1,0 +1,32 @@
+experiment_name: 02_attack_fgsm_pgd_full_test_key_configs
+seed: 42
+
+data:
+  dataset: GTSRB
+  root: data/raw
+  image_size: 64
+  batch_size: 128
+  num_workers: 4
+  max_eval_samples: 0
+  download: false
+
+model:
+  checkpoint: results/01_baseline/resnet18/checkpoints/best_model.pth
+
+attacks:
+  fgsm:
+    epsilons: [0.03]
+  pgd:
+    epsilons: [0.03]
+    alpha: 0.005
+    steps: 7
+
+outputs:
+  result_dir: results/02_attack/fgsm_pgd_full_test
+  report_figure_dir: results/02_attack/fgsm_pgd_full_test/report_figures
+  report_table_dir: results/02_attack/fgsm_pgd_full_test/report_tables
+  max_cases_per_grid: 12
+  save_adversarial_grid: true
+  save_noise_map: true
+  save_confidence_bar: true
+  save_attack_curve: true

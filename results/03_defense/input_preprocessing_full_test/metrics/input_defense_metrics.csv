@@ -1,0 +1,3 @@
+﻿attack,epsilon,defense,clean_accuracy,adversarial_accuracy_before_defense,defended_accuracy,recovery_rate_on_successful_attacks,mean_defended_confidence,total_images
+fgsm,0.03,jpeg_compression,0.978147268408551,0.6666666666666666,0.7835312747426761,0.37747839349262835,0.9165041577634316,12630
+pgd,0.03,jpeg_compression,0.978147268408551,0.5924782264449723,0.780443388756928,0.487579552453295,0.9378445325866165,12630

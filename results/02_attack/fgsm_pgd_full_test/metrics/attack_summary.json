@@ -1,0 +1,22 @@
+{
+  "metrics": [
+    {
+      "attack": "fgsm",
+      "epsilon": 0.03,
+      "clean_accuracy": 0.978147268408551,
+      "adversarial_accuracy": 0.6666666666666666,
+      "attack_success_rate": 0.3184393718633641,
+      "mean_confidence_drop": 0.10316166920928094,
+      "total_images": 12630
+    },
+    {
+      "attack": "pgd",
+      "epsilon": 0.03,
+      "clean_accuracy": 0.978147268408551,
+      "adversarial_accuracy": 0.5924782264449723,
+      "attack_success_rate": 0.394285251740327,
+      "mean_confidence_drop": 0.06535596204294822,
+      "total_images": 12630
+    }
+  ]
+}
